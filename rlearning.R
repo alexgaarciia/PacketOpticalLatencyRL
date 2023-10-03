@@ -1,29 +1,36 @@
-# Reinforcement learning
-# Nuestro objetivo: definir un framework basado en RL para decidir encaminamiento
-# (mejor ruta posible) basada en recompensas que tengan en cuenta calidad del
-# enlace (en errores), carga del enlace en porcentaje (por ejmplo, si un enlace
-# es a 100Gb/s y lleva 35Gbps de tráfico, entonces su carga es del 35%) y 
-# otras métricas que se puedan añadir al modelo (enlaces de bajo consumo, etc).
+################################################################################
+#                         MAIN GOAL OF THE PROJECT
+################################################################################
+# Define a framework based on RL to decide which is the best possible route
+# based on rewards. It will take into account the quality of transmission, 
+# load and other metrics that could be added to the model.
 
-# 1. Instalación de librería "ReinforcementLearning":
+
+################################################################################
+#                       DEFINITION OF THE MAIN SCENARIO
+# the rewards are inmediate and are useful to guide the learning process
+###############################################################################
+# 1. Installation of necessary libraries:
 library(ReinforcementLearning)
+install.packages("igraph")
+library(igraph)
 rm(list=ls())
 
-# 2. Definición de estados y posibles acciones:
+# 2. Definition of states and possible actions:
 states <- c("s1", "s2", "s3", "s4")
 actions <- c("right", "left", "up", "down")
 
-# 3. Definición del environment:
+# 3. Definition of the environment:
 env <- function(state, action) {
-  # with a dataframe maybe, otherwise it is too difficult...
-  rr = as.data.frame(matrix(-1,nrow=4,ncol=4)); # llenamos de -1 una matrix de 4x4
+  # With a dataframe maybe, otherwise it is too difficult...
+  rr = as.data.frame(matrix(-1,nrow=4,ncol=4)); # fill with -1 a 4x4 matrix
   colnames(rr) = c("right","left","up","down"); rownames(rr)=c("s1","s2","s3","s4")
   rr["s1","right"] = 1/1; rr["s1","down"] = 1/10
   rr["s2","right"] = 1/10; rr["s2","down"] = 1/1; rr["s2","left"] = 1/1;
   rr["s3","right"] = 1/1; rr["s3","up"] = 1/1; rr["s3","left"] = 1/10;
   rr["s4","right"] = 10; rr["s3","up"] = 10; rr["s3","left"] = 1/10; rr["s4","down"] = 1/1;
   
-  # definimos la q-table
+  # Q-table is defined
   ns = as.data.frame(matrix(0,nrow=4,ncol=4));
   colnames(ns) = c("right","left","up","down"); rownames(ns)=c("s1","s2","s3","s4")
   ns["s1","up"] = state("s1"); ns["s1","down"] = state("s3");
@@ -37,65 +44,65 @@ env <- function(state, action) {
   
   ns["s4","up"] = state("s4"); ns["s4","down"] = state("s3");
   ns["s4","right"] = state("s4"); ns["s4","left"] = state("s2");
-
-  next_state <- state
-  Inff = -100 # definimos Inff, que es una reward negativa.
   
-  # Aquí comienza la definición de rewards:
-  # 1. Estado s1:
+  next_state <- state
+  Inff = -100 
+  
+  # Here is where the rewards are defined:
+  # State s1:
   if (state == state("s1") ) {
     if (action == "down") {
       next_state = state("s3")
-      reward = -10 # 10 ms
+      reward = -10 
     }
     if (action == "right") {
       next_state = state("s2")
-      reward = -1 # 1 ms  
+      reward = -1 
     } else {
       next_state = state("s1")
       reward = Inff
     }
   }
   
-  # 2. Estado s2:
+  # State s2:
   if (state == state("s2")) {
     if (action == "right") {
       next_state = state("s4")
-      reward = -1 # 1 ms  # antes ponía -10, corregido el 16/09/2023
+      reward = -1 # it was wrongly set as -10, corrected 16/09/2023
     }
     if (action == "left") {
-      next_state = state("s1") # antes ponía s4, corregido el 08/09/2023
-      reward = -10 # 10 ms  
+      next_state = state("s1") # it was wrongly set as s4, corrected 08/09/2023
+      reward = -10   
     }
     if (action == "down") {
       next_state = state("s3")
-      reward = -1 # 1 ms
+      reward = -1 
     } else {
       next_state = state("s2")
       reward = Inff
     }
   }
   
-  # 3. Estado s3:
+  # State s3:
   if (state == state("s3")) {
     if (action == "up") {
       next_state = state("s2")
-      reward = -1 # 1 ms  
+      reward = -1 
     }
     if (action == "left") {
       next_state = state("s1")
-      reward = -10 # 10 ms
+      reward = -10 
     }
     if (action == "right") {
       next_state = state("s4")
-      reward = -1 # 10 ms
+      reward = -1 
     } else {
       next_state = state("s3")
       reward = Inff
     }
   }
   
-  # 4. Estado 4:
+  # State 4:
   if (state == state("s4")) {
     next_state = state("s4")
     reward = Inff
@@ -105,37 +112,16 @@ env <- function(state, action) {
   if (next_state == state("s4") && state != state("s4")) {
     next_state = state("s4")
     reward <- 100
-    #} else {
-    #  reward = 0
   }
-  
-  
-  # if (next_state == state("s4") && state != state("s4")) {
-  #    next_state = state("s4")
-  #    reward <- 0
-  #} else {
-  #  reward = 0
-  # }
-  
-  
-  #print(state)
-  #print(action)
-  #print(reward)
-  #print(next_state)
-  
-  #next_state = ns[state,action]
-  #reward = rr[state,action]  
-  
-  #if (next_state == state("s4") && state != state("s4")) {
-  #  next_state = state("s4")
-  #  reward <- 100
-  #}
   
   out <- list(NextState = next_state, Reward = reward)
   return(out)
+  
 }
 
-# 4. Sample N = 1000 random sequences from the environment
+
+
+# 4. Sample N = 1000 random sequences from the environment:
 data <- sampleExperience(N = 1000,
                          env = env,
                          states = states,
@@ -145,7 +131,7 @@ head(data)
 # 5. Define reinforcement learning parameters:
 control <- list(alpha = 1, gamma = 0.0005, epsilon = 0.1)
 
-# 6. Perform reinforcement learning
+# 6. Perform reinforcement learning:
 model <- ReinforcementLearning(data,
                                s = "State",
                                a = "Action",
@@ -153,19 +139,19 @@ model <- ReinforcementLearning(data,
                                s_new = "NextState",
                                control = control)
 
-# Print policy
+# Print policy:
 computePolicy(model)
 
-# Print state-action function
+# Print state-action function:
 print(model)
 
-# 7. Instalamos herramienta que se utiliza para resolver y analizar problemas de MDP.
+
+################################################################################
+#                                 SCENARIO 1
+################################################################################
+# Install tool use to solve and analyze MDP problems:
 library(MDPtoolbox) 
 
-
-################################################################################
-#                                   SCENARIO 1:
-################################################################################
 # Scenario 1: Direct path works well QoT = 10^{-5}
 QoT = list(e12 = 1e-5, e13=1e-5, e32=1e-5, e14=1e-5, e42=1e-5)
 load = list(e12 = 0.3, e13=0.5, e32=0.5, e14=0.1, e42=0.7)
@@ -173,6 +159,7 @@ nhops = list(e12 = 1, e13=2, e32=1, e14=2, e42=1)
 
 K=3
 
+# Define the transition probability matrix:
 Probs <- array(0, c(4,4,3));  
 Probs[1,3,1] = 1; Probs[2,2,1] = 1; Probs[3,3,1]=1; Probs[4,2,1]=1 #NE
 Probs[1,2,2] = 1; Probs[2,2,2] = 1; Probs[3,3,2]=1; Probs[4,4,2]=1 #E
@@ -181,16 +168,10 @@ Probs[1,4,3] = 1; Probs[2,2,3] = 1; Probs[3,2,3]=1; Probs[4,4,3]=1 #SE
 Top = 11
 Inff = -100
 
-# Las filas de la matriz "reward" corresponden con los estados del entorno:
-# s1, s2, s3 y s4.
-
-# Las columnas se refieren a todas las acciones que yo puedo tomar. En este caso,
-# son NE, E, SE.
-Reward = as.matrix(data.frame(R1=c(Top-1,Inff,Inff,Top-2), #NE
-                              R2=c(Top-10,Inff,Inff,Inff), #E
-                              R3=c(Top-2,Inff,Top-10,Inff))) #SE
-
-
+# Define the reward matrix:
+# The rows correspond to the states of the environment:s1, s2, s3 y s4.
+# The columns correspond to all the possible actions that can be taken; in this
+# case NE, E, SE.
 Reward = as.matrix(data.frame(R1=c(log10(1/QoT$e13)-log10(1-load$e13)-K*nhops$e13, # NE
                                    Inff,
                                    Inff,
@@ -205,7 +186,8 @@ Reward = as.matrix(data.frame(R1=c(log10(1/QoT$e13)-log10(1-load$e13)-K*nhops$e1
                                    Inff))) #SE
 print(Reward)
 
-dataF = list(P=Probs, R=Reward)# $P = Probs; dataF$R=Reward
+# Solve using an MDP:
+dataF = list(P=Probs, R=Reward)
 solver = mdp_LP(P=dataF$P, R=dataF$R, discount=0.95)
 print(solver$V) # V optimal value function
 print(solver$policy) # policy optimal policy. Each element is an integer
@@ -214,19 +196,20 @@ print(solver$time) # CPU time used to run the program
 
 
 ################################################################################
-#                                   SCENARIO 2:
+#                                 SCENARIO 2
 ################################################################################
 # Scenario 2: Direct path degrades QoT = 10^{-2}
 QoT = list(e12 = 1e-2, e13=1e-5, e32=1e-5, e14=1e-5, e42=1e-5)
 load = list(e12 = 0.3, e13=0.5, e32=0.5, e14=0.1, e42=0.7)
 nhops = list(e12 = 1, e13=2, e32=1, e14=2, e42=1)
 
+# Again define the transition probability matrix:
 Probs <- array(0, c(4,4,3));  
 Probs[1,3,1] = 1; Probs[2,2,1] = 1; Probs[3,3,1]=1; Probs[4,2,1]=1 #NE
 Probs[1,2,2] = 1; Probs[2,2,2] = 1; Probs[3,3,2]=1; Probs[4,4,2]=1 #E
 Probs[1,4,3] = 1; Probs[2,2,3] = 1; Probs[3,2,3]=1; Probs[4,4,3]=1 #SE
 
-#K=10
+# Define the reward matrix:
 Reward = as.matrix(data.frame(R1=c(log10(1/QoT$e13)-log10(1-load$e13)-K*nhops$e13, # NE
                                    Inff,
                                    Inff,
@@ -241,6 +224,8 @@ Reward = as.matrix(data.frame(R1=c(log10(1/QoT$e13)-log10(1-load$e13)-K*nhops$e1
                                    Inff))) #SE
 
 print(Reward)
+
+# Solve the environment using MDP:
 dataF = list(P=Probs, R=Reward)# $P = Probs; dataF$R=Reward
 #solver = mdp_policy_iteration(P=dataF$P, R=dataF$R, discount=0.9995)
 solver = mdp_LP(P=dataF$P, R=dataF$R, discount=0.95)
@@ -250,38 +235,30 @@ print(solver$time)
 
 
 ################################################################################
+# The main goal of this part is to include the possibility that there are
+# multiple paths between routers.
 # Trying to store values of QoT, load and nhops in 3D arrays and make the
 # algorithm choose the best path in terms of QoT, load and nhops.
 ################################################################################
 
-# Definición del array 3D con valores de QoT, carga (load) y nhops
-# Supongamos que tienes los valores de QoT, carga y nhops para los caminos entre nodos.
-# Los valores son ficticios, ajústalos según tus necesidades reales.
-
-# Dimensiones del array 3D (num_nodes x num_nodes x num_paths)
+# Define the dimensions of the 3D array (num_nodes x num_nodes x num_paths):
 num_nodes <- length(states)
 num_paths <- 2  # Puedes ajustar esto según la cantidad de caminos posibles
 
-# Supongamos que tenemos valores de QoT, carga y nhops para los caminos
-# entre nodos s1, s2, s3 y s4.
-# En este ejemplo, asignaremos valores ficticios a modo de ejemplo.
-
-# Valores ficticios de QoT, carga (load) y nhops para los caminos entre nodos.
+# Create the 3D arrays for each of the variables:
 QoT_values <- array(NA, dim = c(num_nodes, num_nodes, num_paths))
 load_values <- array(NA, dim = c(num_nodes, num_nodes, num_paths))
 nhops_values <- array(NA, dim = c(num_nodes, num_nodes, num_paths))
 
 # Ahora, agrega los nombres de filas y columnas si es necesario
-rownames(QoT_values) <- colnames(QoT_values) <- states
-rownames(load_values) <- colnames(load_values) <- states
-rownames(nhops_values) <- colnames(nhops_values) <- states
+#rownames(QoT_values) <- colnames(QoT_values) <- states
+#rownames(load_values) <- colnames(load_values) <- states
+#rownames(nhops_values) <- colnames(nhops_values) <- states
 
-# Valores de QoT, carga (load) y nhops para los caminos entre nodos s1, s2, s3 y s4.
-# Puedes ajustar estos valores según tus necesidades reales.
-# En este ejemplo, utilizamos valores ficticios:
-# Supongamos que hay tres caminos posibles entre cada par de nodos.
+# Define the values of QoT, load and nhops for each of the possible paths
+# between states
 
-# Caminos entre s1 y s2
+#  S1-S2
 QoT_values[1, 2, 1] <- 1e-5
 load_values[1, 2, 1] <- 0.3
 nhops_values[1, 2, 1] <- 1
@@ -290,8 +267,7 @@ QoT_values[1, 2, 2] <- 1e-5
 load_values[1, 2, 2] <- 0.5
 nhops_values[1, 2, 2] <- 3
 
-
-# Caminos entre s1 y s3
+# S1-S3
 QoT_values[1, 3, 1] <- 1e-5
 load_values[1, 3, 1] <- 0.4
 nhops_values[1, 3, 1] <- 3
@@ -300,7 +276,7 @@ QoT_values[1, 3, 2] <- 1e-5
 load_values[1, 3, 2] <- 0.6
 nhops_values[1, 3, 2] <- 4
 
-# Caminos entre s2 y s1:
+# S2-S1
 QoT_values[2, 1, 1] <- 1e-5
 load_values[2, 1, 1] <- 0.3
 nhops_values[2, 1, 1] <- 1
@@ -309,7 +285,7 @@ QoT_values[2, 1, 2] <- 1e-5
 load_values[2, 1, 2] <- 0.1
 nhops_values[2, 1, 2] <- 4
 
-# Caminos entre s2 y s3:
+# S2-S3
 QoT_values[2, 3, 1] <- 1e-5
 load_values[2, 3, 1] <- 0.5
 nhops_values[2, 3, 1] <- 1
@@ -318,7 +294,7 @@ QoT_values[2, 3, 2] <- 1e-5
 load_values[2, 3, 2] <- 0.1
 nhops_values[2, 3, 2] <- 4
 
-# Caminos entre s2 y s4:
+# S2-S4
 QoT_values[2, 4, 1] <- 1e-5
 load_values[2, 4, 1] <- 0.7
 nhops_values[2, 4, 1] <- 1
@@ -327,7 +303,7 @@ QoT_values[2, 4, 2] <- 1e-5
 load_values[2, 4, 2] <- 0.9
 nhops_values[2, 4, 2] <- 2
 
-# Caminos entre s3 y s1:
+# S3-S1
 QoT_values[3, 1, 1] <- 1e-5
 load_values[3, 1, 1] <- 0.5
 nhops_values[3, 1, 1] <- 2
@@ -336,7 +312,7 @@ QoT_values[3, 1, 2] <- 1e-5
 load_values[3, 1, 2] <- 0.5
 nhops_values[3, 1, 2] <- 1
 
-# Caminos entre s3 y s2:
+# S3-S2
 QoT_values[3, 2, 1] <- 1e-5
 load_values[3, 2, 1] <- 0.5
 nhops_values[3, 2, 1] <- 1
@@ -345,7 +321,7 @@ QoT_values[3, 2, 2] <- 1e-5
 load_values[3, 2, 2] <- 0.8
 nhops_values[3, 2, 2] <- 1
 
-# Caminos entre s3 y s4:
+# S3-S4
 QoT_values[3, 4, 1] <- 1e-5
 load_values[3, 4, 1] <- 0.5
 nhops_values[3, 4, 1] <- 1
@@ -354,7 +330,7 @@ QoT_values[3, 4, 2] <- 1e-5
 load_values[3, 4, 2] <- 0.8
 nhops_values[3, 4, 2] <- 1
 
-# Caminos entre s4 y s2:
+# S4-S2
 QoT_values[4, 2, 1] <- 1e-5
 load_values[4, 2, 1] <- 0.7
 nhops_values[4, 2, 1] <- 1
@@ -363,7 +339,7 @@ QoT_values[4, 2, 2] <- 1e-5
 load_values[4, 2, 2] <- 0.5
 nhops_values[4, 2, 2] <- 8
 
-# Crear una función para calcular el costo total de un camino dado
+# Creation of a function used to compute the total cost of a given path:
 calculate_total_cost <- function(qot, carga, nhops) {
   return (qot + (1/(1-qot)) + carga + nhops)
 }
@@ -374,6 +350,7 @@ QoT <- list()
 loads <- list()
 nhops <- list()
 
+# Useful variables
 num_rows = length(states)
 num_cols = length(actions)
 num_layers = 2
@@ -402,8 +379,7 @@ for (i in 1:num_rows) {
           min_load_dim <- load_value
           min_nhops_dim <- nhops_value
         }
-      
-
+        
         # Store the minimum cost
         entry_name <- paste0("e", i, j)
         min_cost_list[[entry_name]] <- min_cost_dim
@@ -423,11 +399,10 @@ print(QoT)
 print(loads)
 print(nhops)
 
-# Crear la matriz de recompensa:
-# Probs[i, j, k] representa la probabilidad de que, si el sistema se encuentra
-# en el estado i (dimensión 1), el agente toma la acción j (dimensión 2), y 
-# luego el sistema se moverá al estado k (dimensión 3).
-
+# Create the transition probability matrix:
+# Probs[i, j, k] represents the probability that, if the system is in state
+# i (dimension 1), the agent takes action j (dimension 2), then the system
+# will move to state k (dimension 3).
 Probs <- array(0, c(4,4,4));  
 Probs[1,3,1] = 1; Probs[2,2,1] = 1; Probs[3,3,1]=1; Probs[4,2,1]=1 #E
 Probs[1,2,2] = 1; Probs[2,2,2] = 1; Probs[3,3,2]=1; Probs[4,4,2]=1 #O
@@ -437,6 +412,7 @@ Probs[1,4,4] = 1; Probs[2,1,4] = 1; Probs[3,2,4]=1; Probs[4,4,4]=1 #S
 K = 10
 Inff = -100
 
+# Definition of the reward matrix:
 # R1: Right, este.
 # R2: Left, oeste.
 # R3: Up, norte.
@@ -449,6 +425,8 @@ Reward = as.matrix(data.frame(
 ))
 
 print(Reward)
+
+# Solve the MDP
 dataF = list(P=Probs, R=Reward)# $P = Probs; dataF$R=Reward
 #solver = mdp_policy_iteration(P=dataF$P, R=dataF$R, discount=0.9995)
 solver = mdp_LP(P=dataF$P, R=dataF$R, discount=0.95)
