@@ -8,11 +8,10 @@
 
 ################################################################################
 #                       DEFINITION OF THE MAIN SCENARIO
-# the rewards are inmediate and are useful to guide the learning process
+# the rewards are immediate and are useful to guide the learning process
 ###############################################################################
 # 1. Installation of necessary libraries:
 library(ReinforcementLearning)
-install.packages("igraph")
 library(igraph)
 rm(list=ls())
 
@@ -119,7 +118,36 @@ env <- function(state, action) {
   
 }
 
+# In order to plot the topology, we need to know the table "ns":
+ns = as.data.frame(matrix(0,nrow=4,ncol=4));
+colnames(ns) = c("right","left","up","down"); rownames(ns)=c("s1","s2","s3","s4")
+ns["s1","up"] = state("s1"); ns["s1","down"] = state("s3");
+ns["s1","right"] = state("s2"); ns["s1","left"] = state("s1");
 
+ns["s2","up"] = state("s2"); ns["s2","down"] = state("s3");
+ns["s2","right"] = state("s4"); ns["s2","left"] = state("s1");
+
+ns["s3","up"] = state("s2"); ns["s3","down"] = state("s3");
+ns["s3","right"] = state("s4"); ns["s3","left"] = state("s1");
+
+ns["s4","up"] = state("s4"); ns["s4","down"] = state("s3");
+ns["s4","right"] = state("s4"); ns["s4","left"] = state("s2");
+
+# Create the graph
+topologia_red <- graph(edges = c(1, 2, 1, 1, 1, 1, 1, 3,
+                                 2, 4, 2, 1, 2, 2, 2, 3,
+                                 3, 4, 3, 1, 3, 2, 3, 3,
+                                 4, 4, 4, 2, 4, 4, 4, 3), n = 4, directed = TRUE)
+
+# Assign names to nodes (routers)
+V(topologia_red)$name <- c("S1", "S2", "S3", "S4")
+
+# Define the layout in a big square
+layout <- matrix(c(-2, -2, 2, -2, 2, 2, -2, 2), ncol = 2, byrow = TRUE)
+
+# Plot the graph in a big square
+plot(topologia_red, layout = layout, vertex.label = V(topologia_red)$name,
+     edge.arrow.size = 0.5, edge.curved = 0.2)
 
 # 4. Sample N = 1000 random sequences from the environment:
 data <- sampleExperience(N = 1000,
