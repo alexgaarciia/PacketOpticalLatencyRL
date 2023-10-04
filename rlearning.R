@@ -174,12 +174,8 @@ model <- ReinforcementLearning(data,
                                s_new = "NextState",
                                control = control)
 
-# Print policy: this will help me know the best direction to take from one
-# router to another.
-# If we want to determine the best way of going from S1 to S3, we just have to
-# observe the optimal policy:
-  # 1: Take right from S1 --> This will take us to S2.
-  # 2: Take down from S2 --> This will take us to S3.
+# Print policy: this will help me know the best direction to take from each 
+# router to maximize the reward:
 computePolicy(model)
 
 # Print state-action function:
