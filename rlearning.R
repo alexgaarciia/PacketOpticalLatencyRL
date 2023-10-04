@@ -9,7 +9,7 @@
 ################################################################################
 #                       DEFINITION OF THE MAIN SCENARIO
 # the rewards are immediate and are useful to guide the learning process
-###############################################################################
+################################################################################
 # 1. Installation of necessary libraries:
 library(ReinforcementLearning)
 library(igraph)
