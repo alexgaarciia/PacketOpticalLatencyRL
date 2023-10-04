@@ -1,33 +1,73 @@
 ################################################################################
-#                      DEFINICIÓN DE ALGORITMO GENÉRICO
+#                      DEFINITION OF GENERIC ALGORITHM
 ################################################################################
-# Paso 1: Seleccionar un número aleatorio de routers (estados) entre 4 y 10 y
-# creamos los estados s1, s2...
+# Define a framework based on RL to decide which is the best possible route
+# based on rewards. It will take into account the quality of transmission, 
+# load and other metrics that could be added to the model.
+
+
+################################################################################
+#                       GENERATION OF RANDOM SCENARIO
+################################################################################
+# Step 1: Select a random number of routers (states) between 4 and 10. Plus,
+# create the states s1, s2...
 library(ReinforcementLearning)
 rm(list=ls())
 num_states = sample(4:10, 1)
 
-# Creación de estados:
+# Creation of states:
 states <- c()
 for(i in 1:num_states){
   router <- paste("s", i,sep="")
   states <- c(states, router)
 }
 
-# Paso 2: Definimos acciones
+# Step 2: Define the possible actions.
 actions <- c("right", "left", "up", "down")
 
-# Paso 3: Definimos la Q-table:
+# Step 3: Define the Q-table and randomly define where each router arrives
+# with each action.
 ns <- as.data.frame(matrix(0,nrow=num_states,ncol=4));
 colnames(ns) <- c("right","left","up","down"); rownames(ns)=c(states)
 
-# Paso 4: Definimos aleatoriamente dónde llega cada router con cada acción:
 for (router in states){
   for (action in actions){
     ns[router, action] <- sample(states, 1) 
   }
 }
 
+# Step 4: Draw the topology
+# 1. Define all the edges:
+edges = c()
+for (i in 1:num_states){
+  source = as.numeric(substr(rownames(ns)[i], 2, nchar(rownames(ns)[i])))
+  for (j in actions){
+    destination = as.numeric(substr(ns[states[i], j], 2, nchar(ns[states[i], j])))
+    edges = c(edges, source, destination)
+  }
+  }
+
+topologia_red <- graph(edges = edges, n = num_states, directed = TRUE)
+
+# 2. Assign names to nodes (routers)
+V(topologia_red)$name <- states
+
+# 3. Define the corresponding directions:
+arrow_labels = c()
+for (i in states){
+  # We add the directions for each router. Hence, add 4 directions per router.
+  arrow_labels <- c(arrow_labels, "right", "left", "up", "down")
+}
+
+# 4. Plot the graph:
+plot(topologia_red, vertex.label = V(topologia_red)$name, 
+     edge.label = arrow_labels, edge.arrow.size = 0.5, edge.curved = 0.2)
+
+
+
+################################################################################
+#                                   TO MODIFY!
+################################################################################
 # Paso 5: Definimos el objetivo:
 goal_state = sample(states, 1)
 Inff = -100
