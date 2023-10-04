@@ -142,12 +142,19 @@ topologia_red <- graph(edges = c(1, 2, 1, 1, 1, 1, 1, 3,
 # Assign names to nodes (routers)
 V(topologia_red)$name <- c("S1", "S2", "S3", "S4")
 
+# Define the corresponding directions:
+arrow_labels <- c("right", "left", "up", "down",
+                  "right", "left", "up", "down",
+                  "right", "left", "up", "down",
+                  "right", "left", "up", "down")
+
+
 # Define the layout in a big square
 layout <- matrix(c(-2, -2, 2, -2, 2, 2, -2, 2), ncol = 2, byrow = TRUE)
 
 # Plot the graph in a big square
-plot(topologia_red, layout = layout, vertex.label = V(topologia_red)$name,
-     edge.arrow.size = 0.5, edge.curved = 0.2)
+plot(topologia_red, layout = layout, vertex.label = V(topologia_red)$name, 
+     edge.label = arrow_labels, edge.arrow.size = 0.5, edge.curved = 0.2)
 
 # 4. Sample N = 1000 random sequences from the environment:
 data <- sampleExperience(N = 1000,
@@ -167,7 +174,12 @@ model <- ReinforcementLearning(data,
                                s_new = "NextState",
                                control = control)
 
-# Print policy:
+# Print policy: this will help me know the best direction to take from one
+# router to another.
+# If we want to determine the best way of going from S1 to S3, we just have to
+# observe the optimal policy:
+  # 1: Take right from S1 --> This will take us to S2.
+  # 2: Take down from S2 --> This will take us to S3.
 computePolicy(model)
 
 # Print state-action function:
