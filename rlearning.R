@@ -276,7 +276,6 @@ print(solver$time)
 # Trying to store values of QoT, load and nhops in 3D arrays and make the
 # algorithm choose the best path in terms of QoT, load and nhops.
 ################################################################################
-
 # Define the dimensions of the 3D array (num_nodes x num_nodes x num_paths):
 num_nodes <- length(states)
 num_paths <- 2  # Puedes ajustar esto según la cantidad de caminos posibles
@@ -285,11 +284,6 @@ num_paths <- 2  # Puedes ajustar esto según la cantidad de caminos posibles
 QoT_values <- array(NA, dim = c(num_nodes, num_nodes, num_paths))
 load_values <- array(NA, dim = c(num_nodes, num_nodes, num_paths))
 nhops_values <- array(NA, dim = c(num_nodes, num_nodes, num_paths))
-
-# Ahora, agrega los nombres de filas y columnas si es necesario
-#rownames(QoT_values) <- colnames(QoT_values) <- states
-#rownames(load_values) <- colnames(load_values) <- states
-#rownames(nhops_values) <- colnames(nhops_values) <- states
 
 # Define the values of QoT, load and nhops for each of the possible paths
 # between states
@@ -454,10 +448,10 @@ Inff = -100
 # R3: Up, norte.
 # R4: Down, sur.
 Reward = as.matrix(data.frame(
-  R1 = c(log10(1/QoT$e12) - log10(1 - load$e12) - K * nhops$e12,log10(1/QoT$e42) - log10(1 - load$e42) - K * nhops$e42, Inff, Inff),
-  R2 = c(Inff, log10(1/QoT$e12) - log10(1 - load$e12) - K * nhops$e12, log10(1/QoT$e13) - log10(1 - load$e13) - K * nhops$e13, log10(1/QoT$e42) - log10(1 - load$e42) - K * nhops$e42),
-  R3 = c(Inff, Inff, log10(1/QoT$e32) - log10(1 - load$e32) - K * nhops$e32, Inff),
-  R4 = c(log10(1/QoT$e13) - log10(1 - load$e13) - K * nhops$e13, log10(1/QoT$e32) - log10(1 - load$e32) - K * nhops$e32, Inff, Inff)
+  R1 = c(log10(1/QoT$e12) - log10(1 - loads$e12) - K * nhops$e12,log10(1/QoT$e42) - log10(1 - loads$e42) - K * nhops$e42, Inff, Inff),
+  R2 = c(Inff, log10(1/QoT$e12) - log10(1 - loads$e12) - K * nhops$e12, log10(1/QoT$e13) - log10(1 - loads$e13) - K * nhops$e13, log10(1/QoT$e42) - log10(1 - loads$e42) - K * nhops$e42),
+  R3 = c(Inff, Inff, log10(1/QoT$e32) - log10(1 - loads$e32) - K * nhops$e32, Inff),
+  R4 = c(log10(1/QoT$e13) - log10(1 - loads$e13) - K * nhops$e13, log10(1/QoT$e32) - log10(1 - loads$e32) - K * nhops$e32, Inff, Inff)
 ))
 
 print(Reward)
