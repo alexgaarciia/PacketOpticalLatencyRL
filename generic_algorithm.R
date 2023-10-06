@@ -124,52 +124,57 @@ calculate_total_cost <- function(distance_km, load, BeR) {
   return (propagation_delay + tranmission_queue_delay + ber_penalty)
 }
 
-# Create lists to store the minimum cost and corresponding values
+# Initialize the lists to store the minimum cost and corresponding values
 min_cost_list <- list()
 distance <- list()
 loads <- list()
 nhops <- list()
 
-# Useful variables
-num_rows = length(states)
-num_cols = length(actions)
-num_layers = 2
-
-# Iterating through the dimensions and calculating the minimum values
-for (i in 1:num_rows) {
-  for (j in 1:num_cols) {
+# Iterate through each source (router) and corresponding destinations
+for (source in states) {
+  for (dest_action in actions) {
+    destination <- ns[source, dest_action]
+    
+    # Skip if destination is NA (no connection)
+    if (is.na(destination))
+      next
+    
+    # Construct the entry name in the format eXY
+    entry_name <- paste0("e", substr(source, 2, 2), substr(destination, 2, 2))
+    
     min_cost_dim <- Inf
     min_km_dim <- NULL
     min_load_dim <- NULL
     min_ber_dim <- NULL
+    
     for (k in 1:num_layers) {
       # Get the values for this dimension
-      km_value <- distance_values[i, j, k]
-      load_value <- load_values[i, j, k]
-      ber_value <- ber_values[i, j, k]
+      km_value <- distance_values[as.numeric(substr(source, 2, 2)), 
+                                  as.numeric(substr(destination, 2, 2)), k]
+      load_value <- load_values[as.numeric(substr(source, 2, 2)), 
+                                as.numeric(substr(destination, 2, 2)), k]
+      ber_value <- ber_values[as.numeric(substr(source, 2, 2)), 
+                              as.numeric(substr(destination, 2, 2)), k]
       
       # Check if any of the values is NA
       if (!anyNA(km_value) && !anyNA(load_value) && !anyNA(ber_value)) {
         # Calculate the minimum cost
         cost <- calculate_total_cost(km_value, load_value, ber_value)
         
-        if (cost < min_cost_dim){
+        if (cost < min_cost_dim) {
           min_cost_dim <- cost
           min_km_dim <- km_value
           min_load_dim <- load_value
           min_ber_dim <- ber_value
         }
-        
-        # Store the minimum cost
-        entry_name <- paste0("e", i, j)
-        min_cost_list[[entry_name]] <- min_cost_dim
-        
-        # Store the corresponding values in separate lists
-        distance[[entry_name]] <- min_km_dim
-        loads[[entry_name]] <- min_load_dim
-        nhops[[entry_name]] <- min_ber_dim
       }
     }
+    
+    # Store the minimum cost and corresponding values
+    min_cost_list[[entry_name]] <- min_cost_dim
+    distance[[entry_name]] <- min_km_dim
+    loads[[entry_name]] <- min_load_dim
+    nhops[[entry_name]] <- min_ber_dim
   }
 }
 
@@ -180,22 +185,54 @@ print(loads)
 print(nhops)
 
 
+
 ################################################################################
-# Generar las probabilidades de transición:
-# Definir dimensiones de la matriz Probs (sustituye num_states y num_actions por los valores reales)
+#                         SOLVE THE PROPOSED SCENARIO
+################################################################################
+# Generate the transition probabilities randomly.
+# This approach ensures that the transition probability matrix complies with the
+# fundamental property that the sum of transition probabilities from a given
+# state for a specific action is equal to 1.
 num_actions <- 4
 Probs <- array(0, c(num_states, num_states, num_actions))
 
-# Generar probabilidades de transición aleatorias
 for (i in 1:num_states) {
   for (j in 1:num_states) {
     for (k in 1:num_actions) {
-      # Generar una probabilidad de transición aleatoria en el rango [0, 1]
       Probs[i, j, k] <- runif(1)
       
-      # Asegurarse de que la suma de las probabilidades sea 1 para cada estado y acción
+      # Make sure the sum of the probabilities is 1 for each state and action
       Probs[i, , k] <- Probs[i, , k] / sum(Probs[i, , k])
     }
   }
 }
+
+# Define the reward matrix:
+# Initialize the reward matrix with zeros
+reward_matrix <- matrix(0, nrow = num_states, ncol = num_actions)
+
+
+try = c()
+# Iterate over each router and action
+for (i in 1:num_states) {
+  for (j in 1:num_actions) {
+    # Get the minimum cost associated with this router-action pair
+    entry_name <- paste0("e", i, j)
+    min_cost <- min_cost_list[[entry_name]]
+
+    # Assign the reward as negative of the minimum cost
+    reward_matrix[i, j] <- -min_cost
+  }
+}
+
+# Print the reward matrix
+print("Reward Matrix:")
+print(reward_matrix)
+
+
+
+
+
+
+
 
