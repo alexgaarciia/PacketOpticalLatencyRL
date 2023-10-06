@@ -12,6 +12,7 @@
 # Step 1: Select a random number of routers (states) between 4 and 10. Plus,
 # create the states s1, s2...
 library(ReinforcementLearning)
+library(igraph)
 rm(list=ls())
 num_states = sample(4:10, 1)
 
@@ -30,10 +31,11 @@ actions <- c("right", "left", "up", "down")
 ns <- as.data.frame(matrix(0,nrow=num_states,ncol=4));
 colnames(ns) <- c("right","left","up","down"); rownames(ns)=c(states)
 
-for (router in states){
-  for (action in actions){
-    ns[router, action] <- sample(states, 1) 
-  }
+for (router in states) {
+  # THIS CODE WAS MODIFIED SO THAT WE CANNOT REACH THE SAME NODE THROUGH DIFFERENT ACTIONS #
+  available_states <- setdiff(states, router)  # Exclude the current router from available destinations
+  sample_destinations <- sample(available_states, 4)  # Randomly select distinct destinations for each action
+  ns[router, actions] <- sample_destinations
 }
 
 # Step 4: Draw the topology
@@ -64,168 +66,46 @@ plot(topologia_red, vertex.label = V(topologia_red)$name,
      edge.label = arrow_labels, edge.arrow.size = 0.5, edge.curved = 0.2)
 
 
-
 ################################################################################
-#                                   TO MODIFY!
+#        GENERATION OF RANDOM VALUES OF DISTANCE, LOAD AND Bit Error Rate
 ################################################################################
-# Paso 5: Definimos el objetivo:
-goal_state = sample(states, 1)
-Inff = -100
+# Define the dimensions of the 3D array (num_nodes x num_nodes x num_paths):
+num_nodes <- length(states)
+num_paths <- 2  # Puedes ajustar esto según la cantidad de caminos posibles
 
-# Paso 6: Definición de environment
-env <- function(state, action) {
-  next_state <- ns[state, action] 
-  
-  if (state == next_state) {
-    reward <- Inff
-  } else if (next_state == goal_state) {
-    reward <- -1
-  } else {
-    reward <- -10
+# Create the 3D arrays for each of the variables:
+distance_values <- array(NA, dim = c(num_nodes, num_nodes, num_paths))
+load_values <- array(NA, dim = c(num_nodes, num_nodes, num_paths))
+ber_values <- array(NA, dim = c(num_nodes, num_nodes, num_paths))
+
+
+# Fill the lists:
+for (i in 1:nrow(ns)) {
+  source = i
+  for (j in 1:ncol(ns)) {
+    if (ns[i, j] != rownames(ns)[i]) {
+      destination = as.numeric(substr(ns[i, j], 2, nchar(ns[i, j])))
+      for (k in 1:num_paths){
+        km = runif(1, min = 1, max = 20)
+        load = runif(1, min = 0, max = 1)
+        BeR <- runif(1, min = 0, max = 10^-6)
+        distance_values[source, destination, k] = km
+        load_values[source, destination, k] = load
+        ber_values[source, destination, k] = BeR
+      }
+    }
   }
-  
-  out <- list(NextState = next_state, Reward = reward)
-  return(out)
 }
 
-
-################################################################################
-#                           OBTENCIÓN DE LA POLICY
-################################################################################
-# Paso 1: Sample N = 1000 random sequences from the environment
-data <- sampleExperience(N = 1000,
-                         env = env,
-                         states = states,
-                         actions = actions)
-head(data)
-
-# Paso 2: Define reinforcement learning parameters:
-control <- list(alpha = 1, gamma = 0.0005, epsilon = 0.1)
-
-# Paso 3: Perform reinforcement learning
-model <- ReinforcementLearning(data,
-                               s = "State",
-                               a = "Action",
-                               r = "Reward",
-                               s_new = "NextState",
-                               control = control)
-
-# Print policy
-computePolicy(model)
-
-# Print state-action function
-print(model)
+# Check generate values:
+print(distance_values)
+print(load_values)
+print(ber_values)
 
 
 ################################################################################
 #                           CREACIÓN DE ESCENARIOS
 ################################################################################
-# Crear una lista para almacenar la QoT
-QoT <- list()
-
-# Conjunto para rastrear conexiones ya creadas
-created_connections <- c()
-
-# Calcular la QoT para cada par único de routers
-for (router_from in states) {
-  for (action in actions) {
-    router_to <- ns[router_from, action]
-    
-    # Evitar duplicados y conexiones de un router a sí mismo
-    if (router_from != router_to) {
-      # Obtener los números de router sin la letra "s"
-      router_from_number <- substr(router_from, 2, nchar(router_from))
-      router_to_number <- substr(router_to, 2, nchar(router_to))
-      
-      # Generar el nombre de la conexión (asegurándose de que esté ordenado)
-      connection_name <- paste("e", min(router_from_number, router_to_number), max(router_from_number, router_to_number), sep = "")
-      
-      # Verificar si la conexión inversa ya está presente en el conjunto
-      if (!(connection_name %in% created_connections)) {
-        # Agregar la conexión actual al conjunto
-        created_connections <- c(created_connections, connection_name)
-        
-        # Calcular un valor aleatorio para la QoT
-        qot_value <- 1e-5  # Puedes ajustar los valores mínimos y máximos según tus necesidades
-        
-        # Agregar la QoT al nombre correspondiente en la lista
-        QoT[[connection_name]] <- qot_value
-      }
-    }
-  }
-}
-
-# Crear una lista para almacenar la carga de los enlaces
-load <- list()
-
-# Conjunto para rastrear conexiones ya creadas
-created_connections <- c()
-
-# Calcular la carga para cada par único de routers
-for (router_from in states) {
-  for (action in actions) {
-    router_to <- ns[router_from, action]
-    
-    # Evitar duplicados y conexiones de un router a sí mismo
-    if (router_from != router_to) {
-      # Obtener los números de router sin la letra "s"
-      router_from_number <- substr(router_from, 2, nchar(router_from))
-      router_to_number <- substr(router_to, 2, nchar(router_to))
-      
-      # Generar el nombre de la conexión (asegurándose de que esté ordenado)
-      connection_name <- paste("e", min(router_from_number, router_to_number), max(router_from_number, router_to_number), sep = "")
-      
-      # Verificar si la conexión inversa ya está presente en el conjunto
-      if (!(connection_name %in% created_connections)) {
-        # Agregar la conexión actual al conjunto
-        created_connections <- c(created_connections, connection_name)
-        
-        # Calcular un valor aleatorio para la carga (entre 0 y 1)
-        load_value <- runif(1, min = 0, max = 1)
-        
-        # Agregar la carga al nombre correspondiente en la lista
-        load[[connection_name]] <- load_value
-      }
-    }
-  }
-}
-
-
-# Crear una lista para almacenar los valores de hops
-nhops <- list()
-
-# Conjunto para rastrear conexiones ya creadas
-created_connections <- c()
-
-# Calcular el número de hops para cada par único de routers
-for (router_from in states) {
-  for (action in actions) {
-    router_to <- ns[router_from, action]
-    
-    # Evitar duplicados y conexiones de un router a sí mismo
-    if (router_from != router_to) {
-      # Obtener los números de router sin la letra "s"
-      router_from_number <- substr(router_from, 2, nchar(router_from))
-      router_to_number <- substr(router_to, 2, nchar(router_to))
-      
-      # Generar el nombre de la conexión (asegurándose de que esté ordenado)
-      connection_name <- paste("e", min(router_from_number, router_to_number), max(router_from_number, router_to_number), sep = "")
-      
-      # Verificar si la conexión inversa ya está presente en el conjunto
-      if (!(connection_name %in% created_connections)) {
-        # Agregar la conexión actual al conjunto
-        created_connections <- c(created_connections, connection_name)
-        
-        # Calcular un valor aleatorio para el número de nhops (valores entre 1 y 10)
-        num_nhops <- sample(1:10, 1)
-        
-        # Agregar el número de nhops al nombre correspondiente en la lista
-        nhops[[connection_name]] <- num_nhops
-      }
-    }
-  }
-}
-
 # Generar las probabilidades de transición:
 # Definir dimensiones de la matriz Probs (sustituye num_states y num_actions por los valores reales)
 num_actions <- 4
