@@ -185,7 +185,6 @@ print(loads)
 print(nhops)
 
 
-
 ################################################################################
 #                         SOLVE THE PROPOSED SCENARIO
 ################################################################################
@@ -209,30 +208,33 @@ for (i in 1:num_states) {
 
 # Define the reward matrix:
 # Initialize the reward matrix with zeros
-reward_matrix <- matrix(0, nrow = num_states, ncol = num_actions)
+Reward <- matrix(0, nrow = num_states, ncol = num_actions)
 
-
-try = c()
 # Iterate over each router and action
 for (i in 1:num_states) {
   for (j in 1:num_actions) {
     # Get the minimum cost associated with this router-action pair
     entry_name <- paste0("e", i, j)
     min_cost <- min_cost_list[[entry_name]]
-
-    # Assign the reward as negative of the minimum cost
-    reward_matrix[i, j] <- -min_cost
+    
+    # Check if min_cost is a valid numerical value
+    if (is.numeric(min_cost)) {
+      # Assign the reward as negative of the minimum cost
+      Reward[i, j] <- -min_cost
+    } else {
+      # Assign a large negative reward if min_cost is not valid
+      Reward[i, j] <- -1000
+    }
   }
 }
 
 # Print the reward matrix
-print("Reward Matrix:")
-print(reward_matrix)
+print(Reward)
 
-
-
-
-
-
-
+# Solve the MDP
+dataF = list(P=Probs, R=Reward)# $P = Probs; dataF$R=Reward
+solver = mdp_LP(P=dataF$P, R=dataF$R, discount=0.95)
+print(solver$V)
+print(solver$policy)
+print(solver$time)
 
