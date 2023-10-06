@@ -9,7 +9,7 @@
 ################################################################################
 #                       GENERATION OF RANDOM SCENARIO
 ################################################################################
-# Step 1: Select a random number of routers (states) between 4 and 10. Plus,
+# Select a random number of routers (states) between 4 and 10. Plus,
 # create the states s1, s2...
 library(ReinforcementLearning)
 library(igraph)
@@ -23,10 +23,10 @@ for(i in 1:num_states){
   states <- c(states, router)
 }
 
-# Step 2: Define the possible actions.
+# Define the possible actions.
 actions <- c("right", "left", "up", "down")
 
-# Step 3: Define the Q-table and randomly define where each router arrives
+# Define the Q-table and randomly define where each router arrives
 # with each action.
 ns <- as.data.frame(matrix(0,nrow=num_states,ncol=4));
 colnames(ns) <- c("right","left","up","down"); rownames(ns)=c(states)
@@ -38,7 +38,7 @@ for (router in states) {
   ns[router, actions] <- sample_destinations
 }
 
-# Step 4: Draw the topology
+# Draw the topology
 # 1. Define all the edges:
 edges = c()
 for (i in 1:num_states){
@@ -79,7 +79,7 @@ load_values <- array(NA, dim = c(num_nodes, num_nodes, num_paths))
 ber_values <- array(NA, dim = c(num_nodes, num_nodes, num_paths))
 
 
-# Fill the lists:
+# Fill the arrays:
 for (i in 1:nrow(ns)) {
   source = i
   for (j in 1:ncol(ns)) {
@@ -97,14 +97,89 @@ for (i in 1:nrow(ns)) {
   }
 }
 
-# Check generate values:
+# Check generated values:
 print(distance_values)
 print(load_values)
 print(ber_values)
 
 
 ################################################################################
-#                           CREACIÓN DE ESCENARIOS
+#                 SELECTION OF BEST PATHS (BASED ON PENALTIES)
+################################################################################
+# Creation of a function used to compute the total cost of a given path:
+calculate_total_cost <- function(distance_km, load, BeR) {
+  propagation_delay = 5 * distance_km  # 5us for each km in the fiber.
+  tranmission_queue_delay = 1/(1-load)  # 1us x (1/(1-carga))
+  
+  # Penalization of BeR:
+  if (BeR >= 10^-4 && BeR <= 1){
+    ber_penalty = 1000
+  } else if (BeR > 10^-5){
+    ber_penalty = 50
+  } else {
+    ber_penalty = 0
+  }
+  
+  # Sum of penalties:
+  return (propagation_delay + tranmission_queue_delay + ber_penalty)
+}
+
+# Create lists to store the minimum cost and corresponding values
+min_cost_list <- list()
+distance <- list()
+loads <- list()
+nhops <- list()
+
+# Useful variables
+num_rows = length(states)
+num_cols = length(actions)
+num_layers = 2
+
+# Iterating through the dimensions and calculating the minimum values
+for (i in 1:num_rows) {
+  for (j in 1:num_cols) {
+    min_cost_dim <- Inf
+    min_km_dim <- NULL
+    min_load_dim <- NULL
+    min_ber_dim <- NULL
+    for (k in 1:num_layers) {
+      # Get the values for this dimension
+      km_value <- distance_values[i, j, k]
+      load_value <- load_values[i, j, k]
+      ber_value <- ber_values[i, j, k]
+      
+      # Check if any of the values is NA
+      if (!anyNA(km_value) && !anyNA(load_value) && !anyNA(ber_value)) {
+        # Calculate the minimum cost
+        cost <- calculate_total_cost(km_value, load_value, ber_value)
+        
+        if (cost < min_cost_dim){
+          min_cost_dim <- cost
+          min_km_dim <- km_value
+          min_load_dim <- load_value
+          min_ber_dim <- ber_value
+        }
+        
+        # Store the minimum cost
+        entry_name <- paste0("e", i, j)
+        min_cost_list[[entry_name]] <- min_cost_dim
+        
+        # Store the corresponding values in separate lists
+        distance[[entry_name]] <- min_km_dim
+        loads[[entry_name]] <- min_load_dim
+        nhops[[entry_name]] <- min_ber_dim
+      }
+    }
+  }
+}
+
+# Print the lists with the minimum cost and corresponding values:
+print(min_cost_list)
+print(distance)
+print(loads)
+print(nhops)
+
+
 ################################################################################
 # Generar las probabilidades de transición:
 # Definir dimensiones de la matriz Probs (sustituye num_states y num_actions por los valores reales)
