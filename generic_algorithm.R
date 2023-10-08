@@ -13,6 +13,7 @@
 # create the states s1, s2...
 library(ReinforcementLearning)
 library(igraph)
+library(MDPtoolbox) 
 rm(list=ls())
 num_states = sample(4:10, 1)
 
@@ -147,7 +148,7 @@ for (source in states) {
     min_load_dim <- NULL
     min_ber_dim <- NULL
     
-    for (k in 1:num_layers) {
+    for (k in 1:num_paths) {
       # Get the values for this dimension
       km_value <- distance_values[as.numeric(substr(source, 2, 2)), 
                                   as.numeric(substr(destination, 2, 2)), k]
