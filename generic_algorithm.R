@@ -15,7 +15,7 @@ library(ReinforcementLearning)
 library(igraph)
 library(MDPtoolbox) 
 rm(list=ls())
-num_states = sample(4:10, 1)
+num_states = sample(5:10, 1)
 
 # Creation of states:
 states <- c()
@@ -49,7 +49,6 @@ for (i in 1:num_states){
     edges = c(edges, source, destination)
   }
   }
-
 topologia_red <- graph(edges = edges, n = num_states, directed = TRUE)
 
 # 2. Assign names to nodes (routers)
@@ -72,13 +71,12 @@ plot(topologia_red, vertex.label = V(topologia_red)$name,
 ################################################################################
 # Define the dimensions of the 3D array (num_nodes x num_nodes x num_paths):
 num_nodes <- length(states)
-num_paths <- 2  # Puedes ajustar esto según la cantidad de caminos posibles
+num_paths <- 2  # You can adjust this according to the number of available paths
 
 # Create the 3D arrays for each of the variables:
 distance_values <- array(NA, dim = c(num_nodes, num_nodes, num_paths))
 load_values <- array(NA, dim = c(num_nodes, num_nodes, num_paths))
 ber_values <- array(NA, dim = c(num_nodes, num_nodes, num_paths))
-
 
 # Fill the arrays:
 for (i in 1:nrow(ns)) {
@@ -137,11 +135,12 @@ for (source in states) {
     destination <- ns[source, dest_action]
     
     # Skip if destination is NA (no connection)
-    if (is.na(destination))
+    if (is.na(destination)){
       next
+    }
     
     # Construct the entry name in the format eXY
-    entry_name <- paste0("e", substr(source, 2, 2), substr(destination, 2, 2))
+    entry_name <- paste0("e", substr(source, 2, nchar(source)), substr(destination, 2, nchar(destination)))
     
     min_cost_dim <- Inf
     min_km_dim <- NULL
@@ -150,12 +149,12 @@ for (source in states) {
     
     for (k in 1:num_paths) {
       # Get the values for this dimension
-      km_value <- distance_values[as.numeric(substr(source, 2, 2)), 
-                                  as.numeric(substr(destination, 2, 2)), k]
-      load_value <- load_values[as.numeric(substr(source, 2, 2)), 
-                                as.numeric(substr(destination, 2, 2)), k]
-      ber_value <- ber_values[as.numeric(substr(source, 2, 2)), 
-                              as.numeric(substr(destination, 2, 2)), k]
+      km_value <- distance_values[as.numeric(substr(source, 2, nchar(source))), 
+                                  as.numeric(substr(destination, 2, nchar(destination))), k]
+      load_value <- load_values[as.numeric(substr(source, 2, nchar(source))), 
+                                as.numeric(substr(destination, 2, nchar(destination))), k]
+      ber_value <- ber_values[as.numeric(substr(source, 2, nchar(source))), 
+                              as.numeric(substr(destination, 2, nchar(destination))), k]
       
       # Check if any of the values is NA
       if (!anyNA(km_value) && !anyNA(load_value) && !anyNA(ber_value)) {
@@ -215,17 +214,11 @@ Reward <- matrix(0, nrow = num_states, ncol = num_actions)
 for (i in 1:num_states) {
   for (j in 1:num_actions) {
     # Get the minimum cost associated with this router-action pair
-    entry_name <- paste0("e", i, j)
+    destination = as.numeric(substr(ns[states[i], actions[j]], 2, nchar(ns[states[i], actions[j]])))
+    entry_name <- paste0("e", i, destination)
     min_cost <- min_cost_list[[entry_name]]
+    Reward[i, j] <- -min_cost
     
-    # Check if min_cost is a valid numerical value
-    if (is.numeric(min_cost)) {
-      # Assign the reward as negative of the minimum cost
-      Reward[i, j] <- -min_cost
-    } else {
-      # Assign a large negative reward if min_cost is not valid
-      Reward[i, j] <- -1000
-    }
   }
 }
 
