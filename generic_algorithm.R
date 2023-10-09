@@ -218,7 +218,6 @@ for (i in 1:num_states) {
     entry_name <- paste0("e", i, destination)
     min_cost <- min_cost_list[[entry_name]]
     Reward[i, j] <- -min_cost
-    
   }
 }
 
