@@ -141,7 +141,6 @@ for (source in states) {
     
     # Construct the entry name in the format eXY
     entry_name <- paste0("e", substr(source, 2, nchar(source)), substr(destination, 2, nchar(destination)))
-    
     min_cost_dim <- Inf
     min_km_dim <- NULL
     min_load_dim <- NULL
@@ -217,6 +216,8 @@ for (i in 1:num_states) {
     destination = as.numeric(substr(ns[states[i], actions[j]], 2, nchar(ns[states[i], actions[j]])))
     entry_name <- paste0("e", i, destination)
     min_cost <- min_cost_list[[entry_name]]
+    
+    # Assign the reward
     Reward[i, j] <- -min_cost
   }
 }
