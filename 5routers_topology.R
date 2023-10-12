@@ -74,7 +74,7 @@ for (i in 1:(num_nodes-1)) {  # Adjusted to avoid going out of bounds
       for (k in 1:num_paths){
         km <- runif(1, min = 1, max = 20)
         load <- runif(1, min = 0, max = 1)
-        BeR <- runif(1, min = 0, max = 10^-6)
+        BeR <- runif(1, min = 0, max = 1)
         
         # Assign values to the arrays for both connections due to symmetry
         distance_values[i, j, k] <- km
