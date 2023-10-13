@@ -21,31 +21,6 @@ num_states = 5
 # 1. Creation of states:
 states <- paste0("s", 1:num_states)
 
-# 2. Create the graph edges based on the scenario
-edges_vector <- c("s1", "s2",
-                  "s1", "s3",
-                  "s2", "s1",
-                  "s2", "s3",
-                  "s2", "s4",
-                  "s3", "s1",
-                  "s3", "s2",
-                  "s3", "s5",
-                  "s4", "s2",
-                  "s4", "s5",
-                  "s5", "s3",
-                  "s5", "s4")
-
-# 3. Create the graph
-g <- graph(edges_vector, directed = FALSE)
-
-# 4. Plot the graph
-plot(g, 
-     vertex.color = "lightblue", 
-     vertex.size = 50, 
-     edge.arrow.size = 0.5, 
-     vertex.label.color = "black",
-     main = "Scenario Graph")
-
 
 ################################################################################
 #        GENERATION OF RANDOM VALUES OF DISTANCE, LOAD AND Bit Error Rate
@@ -77,12 +52,9 @@ for (i in 1:(num_nodes-1)) {  # Adjusted to avoid going out of bounds
         BeR <- runif(1, min = 0, max = 1)
         
         # Assign values to the arrays for both connections due to symmetry
-        distance_values[i, j, k] <- km
-        distance_values[j, i, k] <- km
-        load_values[i, j, k] <- load
-        load_values[j, i, k] <- load
-        ber_values[i, j, k] <- BeR
-        ber_values[j, i, k] <- BeR
+        distance_values[i, j, k] <- km; distance_values[j, i, k] <- km
+        load_values[i, j, k] <- load; load_values[j, i, k] <- load
+        ber_values[i, j, k] <- BeR; ber_values[j, i, k] <- BeR
       }
     }
   }
@@ -106,7 +78,7 @@ calculate_total_cost <- function(distance_km, load, BeR) {
   # Penalization of BeR:
   if (BeR >= 10^-4 && BeR <= 1){
     ber_penalty = 1000
-  } else if (BeR > 10^-5){
+  } else if (BeR > 10^-5 && BeR < 10^-4){
     ber_penalty = 50
   } else {
     ber_penalty = 0
@@ -116,13 +88,19 @@ calculate_total_cost <- function(distance_km, load, BeR) {
   return (propagation_delay + tranmission_queue_delay + ber_penalty)
 }
 
+# Construct 3 matrices that will store the values of the shortest paths:
+chosen_distance <- matrix(NA, nrow = num_nodes, ncol = num_nodes)
+chosen_ber <- matrix(NA, nrow = num_nodes, ncol = num_nodes)
+chosen_load <- matrix(NA, nrow = num_nodes, ncol = num_nodes)
+
 # Construct a weight matrix for the graph edges based on the cost
-cost_matrix <- matrix(Inf, nrow = num_nodes, ncol = num_nodes)
+cost_matrix <- matrix(-Inf, nrow = num_nodes, ncol = num_nodes)
 
 for (i in 1:num_nodes) {
   for (j in 1:num_nodes) {
     if (adj_matrix[i,j] == 1) {
       min_cost <- Inf
+      chosen_path_k <- NA  # Track the path 'k' that gave the minimum cost
       for (k in 1:num_paths) {
         km_value <- distance_values[i, j, k]
         load_value <- load_values[i, j, k]
@@ -130,25 +108,69 @@ for (i in 1:num_nodes) {
         if (!anyNA(c(km_value, load_value, ber_value))) {
           cost <- calculate_total_cost(km_value, load_value, ber_value)
           min_cost <- min(min_cost, cost)
+          chosen_path_k <- k  # update the chosen path
         }
       }
       cost_matrix[i, j] <- -min_cost
+      # If we found a chosen path 'k', store the respective km, ber, and load values
+      if (!is.na(chosen_path_k)) {
+        chosen_distance[i, j] <- distance_values[i, j, chosen_path_k]
+        chosen_ber[i, j] <- ber_values[i, j, chosen_path_k]
+        chosen_load[i, j] <- load_values[i, j, chosen_path_k]
+      }
     }
   }
 }
 
 print(cost_matrix)
+print(chosen_distance)
+print(chosen_load)
+print(chosen_ber)
+
+################################################################################
+#                             REPRESENT THE TOPLOGY
+################################################################################
+# Create the graph
+g <- graph_from_adjacency_matrix(adjmatrix =adj_matrix, mode="undirected", weighted=NULL, diag=FALSE)
+
+# Create some example edge labels
+edge_labels = c()
+for (i in 1:(num_states-1)){
+  for (j in (i+1):num_states){
+    if (adj_matrix[i,j] == 1){
+      label <- paste(
+        "Distance:", round(chosen_distance[i,j], 4), 
+        "\nLoad:", round(chosen_load[i,j], 4), 
+        "\nBeR:", chosen_ber[i,j],
+        "\n"
+      )
+      cat(label)
+      edge_labels = c(edge_labels, label)
+    }
+  }
+}
+
+# Plot the graph with edge labels
+plot(g, 
+     vertex.color = "lightblue", 
+     vertex.size = 50, 
+     edge.arrow.size = 0.5, 
+     vertex.label.color = "black",
+     main = "5-Router Topology",
+     edge.label = edge_labels,
+     vertex.label.cex = 0.7,  # Adjusts the vertex label size
+     edge.label.cex = 0.8)    # Adjusts the edge label size)
 
 
 ################################################################################
 #             SOLVE THE PROPOSED SCENARIO USING Q-LEARNING
 ################################################################################
-# Defin the Q-table and fill it with -Inf in case there are no connections.
+# Define the Q-table and fill it with -Inf in case there are no connections.
 Q_table <- matrix(0, nrow = num_nodes, ncol = num_nodes)
 Q_table[adj_matrix == 0] <- -Inf
 
 # Define the parameters for Q-learning.
-alpha <- 0.1  # learning rate
+alpha <- 0.5  # learning rate
 gamma <- 0.9  # discount factor
 epsilon <- 0.1  # exploration rate
 
@@ -167,7 +189,6 @@ for (episode in 1:num_episodes) {
   
   while (TRUE) {  
     possible_actions <- which(adj_matrix[state, ] == 1)
-    
     if (runif(1) < epsilon) {
       # If the agent is exploring (as per the epsilon-greedy strategy), it 
       # chooses a random action from the valid_actions which excludes the nodes
@@ -193,21 +214,22 @@ for (episode in 1:num_episodes) {
     
     visited_nodes <- c(visited_nodes, action)
     
-    reward <- -cost_matrix[state, action] # agent tries to maximize its reward by minimizing the cost.
+    reward <- cost_matrix[state, action] # agent tries to maximize its reward by minimizing the cost.
     future_reward <- gamma * max(Q_table[action, ])
     Q_table[state, action] <- (1-alpha)*Q_table[state, action] + alpha*(reward + future_reward)
     
     state <- action  
-    
   }
 }
+
+print(Q_table)
 
 
 ################################################################################
 #                                   BEST PATH
 ################################################################################
 # After learning, we can use the Q-table to take decisions:
-start_node <- 2
+start_node <- 1
 end_node <- 5
 current_node <- start_node
 path <- c(start_node)
@@ -238,6 +260,11 @@ while (current_node != end_node) {
   current_node <- next_node
 }
 
+# Given your printed Q-table and the derived path, the agent believes that
+# this path has the highest cumulative reward. This doesn't mean that it's the
+# shortest path or has the lowest cost, but rather, based on the training
+# episodes and the Q-learning parameters, it's the path that the agent has
+# learned to be most rewarding.
 print(path)
 
 
@@ -258,15 +285,15 @@ distance_values[5,3,1] <- 2
 distance_values[5,4,1] <- 10
 
 # BeR
-ber_values[1,2,1] = 10^-5
-ber_values[1,3,1] = 10^-5
+ber_values[1,2,1] = 0
+ber_values[1,3,1] = 10^-4
 ber_values[2,3,1] = 10^-4
 ber_values[2,4,1] = 10^-6
 ber_values[3,5,1] = 10^-6
 ber_values[4,5,1] = 10^-6
 
-ber_values[2,1,1] = 10^-5
-ber_values[3,1,1] = 10^-5
+ber_values[2,1,1] = 0
+ber_values[3,1,1] = 10^-4
 ber_values[3,2,1] = 10^-4
 ber_values[4,2,1] = 10^-6
 ber_values[5,3,1] = 10^-6
