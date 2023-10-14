@@ -243,7 +243,7 @@ print(Q_table)
 ################################################################################
 # After learning, we can use the Q-table to take decisions:
 start_node <- 1
-end_node <- 3
+end_node <- 2
 current_node <- start_node
 path <- c(start_node)
 visited <- c()
