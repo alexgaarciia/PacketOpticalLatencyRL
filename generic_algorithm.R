@@ -86,7 +86,6 @@ generate_random_values <- function(num_states, num_paths){
   cat("\n")
   cat("BeR values:\n")
   print(ber_values)
-  
 }
 
 
@@ -114,6 +113,8 @@ calculate_total_cost <- function(distance_km, load, BeR) {
 
 select_best_paths <- function(num_states, num_paths, adj_matrix,
                               distance_values, load_values, ber_values){
+  "The main goal of this function is to go through all the possiblee paths from
+  one router to anoter and select the one with the lowest cost"
   # Construct 3 matrices that will store the values of the shortest paths:
   chosen_distance <- matrix(NA, nrow = num_states, ncol = num_states)
   chosen_ber <- matrix(NA, nrow = num_states, ncol = num_states)
@@ -217,7 +218,7 @@ plot_topology <- function(adj_matrix, chosen_distance, chosen_load, chosen_ber){
 
 
 ################################################################################
-#             SOLVE THE PROPOSED SCENARIO USING Q-LEARNING
+#                  SOLVE THE PROPOSED SCENARIO USING Q-LEARNING
 ################################################################################
 solve_scenario_qlearning <- function(num_states, adj_matrix, alpha, gamma,
                                      epsilon, num_episodes, cost_matrix){
@@ -225,8 +226,7 @@ solve_scenario_qlearning <- function(num_states, adj_matrix, alpha, gamma,
   Q-learning"
   # Define the Q-table and fill it with -Inf in case there are no connections.
   Q_table <- matrix(0, nrow = num_states, ncol = num_states)
-  Q_table[adj_matrix == 0] <- -Inf
-  
+
   # Explore the environment and learn:
   for (episode in 1:num_episodes) {
     # Randomly choose a starting state.
@@ -285,8 +285,8 @@ solve_scenario_qlearning <- function(num_states, adj_matrix, alpha, gamma,
 ################################################################################
 get_best_path_after_learning <- function(Q_table, start_node, end_node, adj_matrix) {
   "Gives the best route from a starting node to a destination node. Beware, since 
-  the code does not guarantee to generate connected graphs, it may not return
-  a path"
+  the code does not guarantee to generate connected graphs, there may not be a
+  path from a certain node to another"
   current_node <- start_node
   path <- c(start_node)
   visited <- c()
@@ -325,7 +325,7 @@ get_best_path_after_learning <- function(Q_table, start_node, end_node, adj_matr
   assign("path", path, envir = .GlobalEnv)
   
   # Check generated values:
-  cat("Path:\n")
+  cat("Path from ", start_node, " to ", end_node, ":\n")
   print(path)
 }
 
@@ -344,5 +344,14 @@ generate_random_values(num_states = num_states, num_paths)
 select_best_paths(num_states, num_paths, adj_matrix, distance_values, load_values, ber_values)
 plot_topology(adj_matrix, chosen_distance, chosen_load, chosen_ber)
 solve_scenario_qlearning(num_states, adj_matrix, alpha, gamma, epsilon, num_episodes, cost_matrix)
-get_best_path_after_learning(Q_table, start_node = 1, end_node = 2, adj_matrix)
+
+# Obtain the path to from every node to every other node:
+for (i in 1:num_states){
+  for (j in 1:num_states){
+    if (i != j){
+      get_best_path_after_learning(Q_table, start_node = i, end_node = j, adj_matrix)
+      cat("\n")
+    }
+  }
+}
 
