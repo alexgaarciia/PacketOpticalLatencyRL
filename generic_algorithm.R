@@ -284,48 +284,61 @@ solve_scenario_qlearning <- function(num_states, adj_matrix, alpha, gamma,
 #                                   BEST PATH
 ################################################################################
 get_best_path_after_learning <- function(Q_table, start_node, end_node, adj_matrix) {
-  "Gives the best route from a starting node to a destination node. Beware, since 
-  the code does not guarantee to generate connected graphs, there may not be a
-  path from a certain node to another"
-  current_node <- start_node
-  path <- c(start_node)
-  visited <- c()
+  "Gives the best route from a starting node to a destination node based on the highest cumulative reward (lowest negative reward)."
+  num_states <- nrow(Q_table)
   
-  while (current_node != end_node) {
-    # Sort Q-values for the current node in descending order
-    sorted_nodes <- order(Q_table[current_node, ], decreasing = TRUE)
-    
-    # Find the best unvisited node that is also connected to the current node
-    next_node <- NULL
-    for (node in sorted_nodes) {
-      if (!node %in% visited && adj_matrix[current_node, node] == 1) {
-        next_node <- node
-        break
+  # Initialize distance and previous node arrays
+  distance <- rep(Inf, num_states)
+  previous <- rep(0, num_states)
+  visited <- rep(FALSE, num_states)
+  
+  # Start node distance is 0
+  distance[start_node] <- 0
+  
+  # Find the shortest path using Dijkstra's algorithm with negative rewards
+  for (i in 1:num_states) {
+    # Find the node with the minimum distance among unvisited nodes
+    min_distance <- Inf
+    min_index <- -1
+    for (v in 1:num_states) {
+      if (!visited[v] && distance[v] < min_distance) {
+        min_distance <- distance[v]
+        min_index <- v
       }
     }
     
-    # If we can't find any valid unvisited nodes, break
-    if (is.null(next_node)) {
-      cat("No valid unvisited nodes connected to the current node. Exiting...\n")
+    if (min_index == -1) {
+      # No more reachable nodes
       break
     }
     
-    visited <- c(visited, current_node)  # Add current node to visited list
-    path <- c(path, next_node)
-    current_node <- next_node
+    visited[min_index] <- TRUE
+    
+    # Update the distances and previous nodes
+    for (v in 1:num_states) {
+      if (!visited[v] && adj_matrix[min_index, v] == 1) {
+        alt <- distance[min_index] + (-Q_table[min_index, v])  # Negative reward as cost
+        if (alt < distance[v]) {
+          distance[v] <- alt
+          previous[v] <- min_index
+        }
+      }
+    }
   }
   
-  # Given your printed Q-table and the derived path, the agent believes that
-  # this path has the highest cumulative reward. This doesn't mean that it's the
-  # shortest path or has the lowest cost, but rather, based on the training
-  # episodes and the Q-learning parameters, it's the path that the agent has
-  # learned to be most rewarding.
+  # Reconstruct the path from end_node to start_node
+  path <- c(end_node)
+  current_node <- end_node
+  while (current_node != start_node) {
+    current_node <- previous[current_node]
+    path <- c(current_node, path)
+  }
   
   # Return generated values:
   assign("path", path, envir = .GlobalEnv)
   
   # Check generated values:
-  cat("Path from ", start_node, " to ", end_node, ":\n")
+  cat("Path from ", start_node, " to ", end_node, " (based on highest cumulative reward):\n")
   print(path)
 }
 
