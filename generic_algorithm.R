@@ -224,7 +224,7 @@ solve_scenario_qlearning <- function(num_states, adj_matrix, alpha, gamma,
                                      epsilon, num_episodes, cost_matrix){
   "This is a function that has the goal of solving a specific scenario using 
   Q-learning"
-  # Define the Q-table and fill it with -Inf in case there are no connections.
+  # Define the Q-table:
   Q_table <- matrix(0, nrow = num_states, ncol = num_states)
 
   # Explore the environment and learn:
