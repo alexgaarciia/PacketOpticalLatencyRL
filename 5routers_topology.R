@@ -269,6 +269,15 @@ print(path)
 
 
 ################################################################################
+distance_values <- array(NA, dim = c(num_nodes, num_nodes, num_paths))
+load_values <- array(NA, dim = c(num_nodes, num_nodes, num_paths))
+ber_values <- array(NA, dim = c(num_nodes, num_nodes, num_paths))
+chosen_distance <- matrix(NA, nrow = num_nodes, ncol = num_nodes)
+chosen_ber <- matrix(NA, nrow = num_nodes, ncol = num_nodes)
+chosen_load <- matrix(NA, nrow = num_nodes, ncol = num_nodes)
+cost_matrix <- matrix(-Inf, nrow = num_nodes, ncol = num_nodes)
+Q_table <- matrix(0, nrow = num_nodes, ncol = num_nodes)
+
 #Distance
 distance_values[1,2,1] = 6
 distance_values[1,3,1] = 1
@@ -285,18 +294,18 @@ distance_values[5,3,1] <- 2
 distance_values[5,4,1] <- 10
 
 # BeR
-ber_values[1,2,1] = 0
+ber_values[1,2,1] = 1
 ber_values[1,3,1] = 10^-4
 ber_values[2,3,1] = 10^-4
 ber_values[2,4,1] = 10^-6
-ber_values[3,5,1] = 10^-6
+ber_values[3,5,1] = 1
 ber_values[4,5,1] = 10^-6
 
-ber_values[2,1,1] = 0
+ber_values[2,1,1] = 1
 ber_values[3,1,1] = 10^-4
 ber_values[3,2,1] = 10^-4
 ber_values[4,2,1] = 10^-6
-ber_values[5,3,1] = 10^-6
+ber_values[5,3,1] = 1
 ber_values[5,4,1] = 10^-6
 
 # Load
