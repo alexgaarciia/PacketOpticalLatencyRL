@@ -9,88 +9,56 @@
 ################################################################################
 #                       GENERATION OF RANDOM SCENARIO
 ################################################################################
-# Select a random number of routers (states) between 4 and 10. Plus,
-# create the states s1, s2...
+# Select a random number of routers (states) and create the states s1, s2...
 library(ReinforcementLearning)
 library(igraph)
 library(MDPtoolbox) 
 rm(list=ls())
-num_states = sample(5:10, 1)
+num_states = sample(6:20, 1)
 
 # Creation of states:
-states <- c()
-for(i in 1:num_states){
-  router <- paste("s", i,sep="")
-  states <- c(states, router)
-}
-
-# Define the possible actions.
-actions <- c("right", "left", "up", "down")
-
-# Define the Q-table and randomly define where each router arrives
-# with each action.
-ns <- as.data.frame(matrix(0,nrow=num_states,ncol=4));
-colnames(ns) <- c("right","left","up","down"); rownames(ns)=c(states)
-
-for (router in states) {
-  # THIS CODE WAS MODIFIED SO THAT WE CANNOT REACH THE SAME NODE THROUGH DIFFERENT ACTIONS #
-  available_states <- setdiff(states, router)  # Exclude the current router from available destinations
-  sample_destinations <- sample(available_states, 4)  # Randomly select distinct destinations for each action
-  ns[router, actions] <- sample_destinations
-}
-
-# Draw the topology
-# 1. Define all the edges:
-edges = c()
-for (i in 1:num_states){
-  source = as.numeric(substr(rownames(ns)[i], 2, nchar(rownames(ns)[i])))
-  for (j in actions){
-    destination = as.numeric(substr(ns[states[i], j], 2, nchar(ns[states[i], j])))
-    edges = c(edges, source, destination)
-  }
-  }
-topologia_red <- graph(edges = edges, n = num_states, directed = TRUE)
-
-# 2. Assign names to nodes (routers)
-V(topologia_red)$name <- states
-
-# 3. Define the corresponding directions:
-arrow_labels = c()
-for (i in states){
-  # We add the directions for each router. Hence, add 4 directions per router.
-  arrow_labels <- c(arrow_labels, "right", "left", "up", "down")
-}
-
-# 4. Plot the graph:
-plot(topologia_red, vertex.label = V(topologia_red)$name, 
-     edge.label = arrow_labels, edge.arrow.size = 0.5, edge.curved = 0.2)
+states <- paste0("s", 1:num_states)
 
 
 ################################################################################
 #        GENERATION OF RANDOM VALUES OF DISTANCE, LOAD AND Bit Error Rate
 ################################################################################
-# Define the dimensions of the 3D array (num_nodes x num_nodes x num_paths):
-num_nodes <- length(states)
+# Define the dimensions of the 3D array (num_states x num_states x num_states):
 num_paths <- 2  # You can adjust this according to the number of available paths
 
+# Create an empty adjacency matrix
+adj_matrix <- matrix(0, nrow = num_states, ncol = num_states)
+
+# Fill the adjacency matrix with random values (1 or 0) to represent connections
+# between routers
+for (i in 1:num_states) {
+  for (j in 1:num_states) {
+    if (i != j) {
+      connection <- sample(c(0, 1), 1)
+      adj_matrix[i, j] <- connection
+      adj_matrix[j, i] <- connection
+    }
+  }
+}
+
 # Create the 3D arrays for each of the variables:
-distance_values <- array(NA, dim = c(num_nodes, num_nodes, num_paths))
-load_values <- array(NA, dim = c(num_nodes, num_nodes, num_paths))
-ber_values <- array(NA, dim = c(num_nodes, num_nodes, num_paths))
+distance_values <- array(NA, dim = c(num_states, num_states, num_paths))
+load_values <- array(NA, dim = c(num_states, num_states, num_paths))
+ber_values <- array(NA, dim = c(num_states, num_states, num_paths))
 
 # Fill the arrays:
-for (i in 1:nrow(ns)) {
-  source = i
-  for (j in 1:ncol(ns)) {
-    if (ns[i, j] != rownames(ns)[i]) {
-      destination = as.numeric(substr(ns[i, j], 2, nchar(ns[i, j])))
+for (i in 1:(num_states-1)) {  # Adjusted to avoid going out of bounds
+  for (j in (i+1):num_states) {  
+    if (adj_matrix[i,j] == 1) {  
       for (k in 1:num_paths){
-        km = runif(1, min = 1, max = 20)
-        load = runif(1, min = 0, max = 1)
-        BeR <- runif(1, min = 0, max = 10^-6)
-        distance_values[source, destination, k] = km
-        load_values[source, destination, k] = load
-        ber_values[source, destination, k] = BeR
+        km <- runif(1, min = 1, max = 20)
+        load <- runif(1, min = 0, max = 1)
+        BeR <- runif(1, min = 0, max = 1)
+        
+        # Assign values to the arrays for both connections due to symmetry
+        distance_values[i, j, k] <- km; distance_values[j, i, k] <- km
+        load_values[i, j, k] <- load; load_values[j, i, k] <- load
+        ber_values[i, j, k] <- BeR; ber_values[j, i, k] <- BeR
       }
     }
   }
@@ -105,15 +73,16 @@ print(ber_values)
 ################################################################################
 #                 SELECTION OF BEST PATHS (BASED ON PENALTIES)
 ################################################################################
-# Creation of a function used to compute the total cost of a given path:
+# Defined a function called "calculate_total_cost" to compute the cost of a certain
+# path based on km, load and BeR values.
 calculate_total_cost <- function(distance_km, load, BeR) {
   propagation_delay = 5 * distance_km  # 5us for each km in the fiber.
-  tranmission_queue_delay = 1/(1-load)  # 1us x (1/(1-carga))
+  tranmission_queue_delay = 1/(1-load)  # 1us x (1/(1-load))
   
   # Penalization of BeR:
   if (BeR >= 10^-4 && BeR <= 1){
     ber_penalty = 1000
-  } else if (BeR > 10^-5){
+  } else if (BeR > 10^-5 && BeR < 10^-4){
     ber_penalty = 50
   } else {
     ber_penalty = 0
@@ -123,112 +92,190 @@ calculate_total_cost <- function(distance_km, load, BeR) {
   return (propagation_delay + tranmission_queue_delay + ber_penalty)
 }
 
-# Initialize the lists to store the minimum cost and corresponding values
-min_cost_list <- list()
-distance <- list()
-loads <- list()
-nhops <- list()
+# Construct 3 matrices that will store the values of the shortest paths:
+chosen_distance <- matrix(NA, nrow = num_states, ncol = num_states)
+chosen_ber <- matrix(NA, nrow = num_states, ncol = num_states)
+chosen_load <- matrix(NA, nrow = num_states, ncol = num_states)
 
-# Iterate through each source (router) and corresponding destinations
-for (source in states) {
-  for (dest_action in actions) {
-    destination <- ns[source, dest_action]
-    
-    # Skip if destination is NA (no connection)
-    if (is.na(destination)){
-      next
-    }
-    
-    # Construct the entry name in the format eXY
-    entry_name <- paste0("e", substr(source, 2, nchar(source)), substr(destination, 2, nchar(destination)))
-    min_cost_dim <- Inf
-    min_km_dim <- NULL
-    min_load_dim <- NULL
-    min_ber_dim <- NULL
-    
-    for (k in 1:num_paths) {
-      # Get the values for this dimension
-      km_value <- distance_values[as.numeric(substr(source, 2, nchar(source))), 
-                                  as.numeric(substr(destination, 2, nchar(destination))), k]
-      load_value <- load_values[as.numeric(substr(source, 2, nchar(source))), 
-                                as.numeric(substr(destination, 2, nchar(destination))), k]
-      ber_value <- ber_values[as.numeric(substr(source, 2, nchar(source))), 
-                              as.numeric(substr(destination, 2, nchar(destination))), k]
-      
-      # Check if any of the values is NA
-      if (!anyNA(km_value) && !anyNA(load_value) && !anyNA(ber_value)) {
-        # Calculate the minimum cost
-        cost <- calculate_total_cost(km_value, load_value, ber_value)
-        
-        if (cost < min_cost_dim) {
-          min_cost_dim <- cost
-          min_km_dim <- km_value
-          min_load_dim <- load_value
-          min_ber_dim <- ber_value
-        }
-      }
-    }
-    
-    # Store the minimum cost and corresponding values
-    min_cost_list[[entry_name]] <- min_cost_dim
-    distance[[entry_name]] <- min_km_dim
-    loads[[entry_name]] <- min_load_dim
-    nhops[[entry_name]] <- min_ber_dim
-  }
-}
-
-# Print the lists with the minimum cost and corresponding values:
-print(min_cost_list)
-print(distance)
-print(loads)
-print(nhops)
-
-
-################################################################################
-#                         SOLVE THE PROPOSED SCENARIO
-################################################################################
-# Generate the transition probabilities randomly.
-# This approach ensures that the transition probability matrix complies with the
-# fundamental property that the sum of transition probabilities from a given
-# state for a specific action is equal to 1.
-num_actions <- 4
-Probs <- array(0, c(num_states, num_states, num_actions))
+# Construct a weight matrix for the graph edges based on the cost
+cost_matrix <- matrix(-Inf, nrow = num_states, ncol = num_states)
 
 for (i in 1:num_states) {
   for (j in 1:num_states) {
-    for (k in 1:num_actions) {
-      Probs[i, j, k] <- runif(1)
+    if (adj_matrix[i,j] == 1) {
+      min_cost <- Inf
+      chosen_path_k <- NA  # Track the path 'k' that gave the minimum cost
+      for (k in 1:num_paths) {
+        # Get the values for this dimension
+        km_value <- distance_values[i, j, k]
+        load_value <- load_values[i, j, k]
+        ber_value <- ber_values[i, j, k]
+        
+        # Check if any of the values is NA
+        if (!anyNA(c(km_value, load_value, ber_value))) {
+          # Calculate the minimum cost
+          cost <- calculate_total_cost(km_value, load_value, ber_value)
+          
+          if (cost < min_cost) {
+            min_cost <- cost
+            chosen_path_k <- k  # update the chosen path
+          }
+        }
+      }
       
-      # Make sure the sum of the probabilities is 1 for each state and action
-      Probs[i, , k] <- Probs[i, , k] / sum(Probs[i, , k])
+      cost_matrix[i, j] <- -min_cost
+      # If we found a chosen path 'k', store the respective km, ber, and load values
+      if (!is.na(chosen_path_k)) {
+        chosen_distance[i, j] <- distance_values[i, j, chosen_path_k]
+        chosen_ber[i, j] <- ber_values[i, j, chosen_path_k]
+        chosen_load[i, j] <- load_values[i, j, chosen_path_k]
+      }
     }
   }
 }
 
-# Define the reward matrix:
-# Initialize the reward matrix with zeros
-Reward <- matrix(0, nrow = num_states, ncol = num_actions)
+print(cost_matrix)
+print(chosen_distance)
+print(chosen_load)
+print(chosen_ber)
 
-# Iterate over each router and action
-for (i in 1:num_states) {
-  for (j in 1:num_actions) {
-    # Get the minimum cost associated with this router-action pair
-    destination = as.numeric(substr(ns[states[i], actions[j]], 2, nchar(ns[states[i], actions[j]])))
-    entry_name <- paste0("e", i, destination)
-    min_cost <- min_cost_list[[entry_name]]
-    
-    # Assign the reward
-    Reward[i, j] <- -min_cost
+
+################################################################################
+#                             REPRESENT THE TOPLOGY
+################################################################################
+# Create the graph
+g <- graph_from_adjacency_matrix(adjmatrix =adj_matrix, mode="undirected", weighted=NULL, diag=FALSE)
+
+# Create some example edge labels
+edge_labels = c()
+for (i in 1:(num_states-1)){
+  for (j in (i+1):num_states){
+    if (adj_matrix[i,j] == 1){
+      label <- paste(
+        "Distance:", round(chosen_distance[i,j], 4), 
+        "\nLoad:", round(chosen_load[i,j], 4), 
+        "\nBeR:", chosen_ber[i,j],
+        "\n"
+      )
+      cat(label)
+      edge_labels = c(edge_labels, label)
+    }
   }
 }
 
-# Print the reward matrix
-print(Reward)
+# Plot the graph with edge labels
+plot(g, 
+     layout = layout_with_fr,
+     vertex.color = "lightblue", 
+     vertex.size = 20, 
+     vertex.label.color = "black",
+     vertex.label.cex = 1,
+     edge.label.cex = 0.8,
+     edge.label = edge_labels,
+     main = "Router Topology") 
 
-# Solve the MDP
-dataF = list(P=Probs, R=Reward)# $P = Probs; dataF$R=Reward
-solver = mdp_LP(P=dataF$P, R=dataF$R, discount=0.95)
-print(solver$V)
-print(solver$policy)
-print(solver$time)
+
+################################################################################
+#             SOLVE THE PROPOSED SCENARIO USING Q-LEARNING
+################################################################################
+# Define the Q-table and fill it with -Inf in case there are no connections.
+Q_table <- matrix(0, nrow = num_states, ncol = num_states)
+Q_table[adj_matrix == 0] <- -Inf
+
+# Define the parameters for Q-learning.
+alpha <- 0.5  # learning rate
+gamma <- 0.9  # discount factor
+epsilon <- 0.1  # exploration rate
+
+# Explore the environment and learn:
+# num_episodes: this sets the number of episodes the Q-learning algorithm will
+# run. An episode is one complete journey from a starting state to an end or a
+# terminal state.
+num_episodes <- 1000 
+for (episode in 1:num_episodes) {
+  # Randomly choose a starting state.
+  state <- sample(1:num_states, 1)  
+  
+  # This list will keep track of all nodes the agent visits in this episode to
+  # avoid loops.
+  visited_nodes <- c(state)
+  
+  while (TRUE) {  
+    possible_actions <- which(adj_matrix[state, ] == 1)
+    if (runif(1) < epsilon) {
+      # If the agent is exploring (as per the epsilon-greedy strategy), it 
+      # chooses a random action from the valid_actions which excludes the nodes
+      # it has already visited. If there are no valid actions left, the episode
+      # ends (breaks out of the while loop).
+      valid_actions <- setdiff(possible_actions, visited_nodes)
+      if (length(valid_actions) == 0) {
+        break
+      }
+      action <- sample(valid_actions, 1)
+    } else {
+      # If the agent is not exploring, it's exploiting. This means it's choosing
+      # the action (directly connected node/router) that has the maximum Q-value
+      # from the Q-table, considering only the nodes it hasn't visited yet.
+      valid_actions <- setdiff(possible_actions, visited_nodes)
+      if (length(valid_actions) == 0) {
+        break
+      }
+      action_values <- Q_table[state, valid_actions]
+      action_index <- which.max(action_values)
+      action <- valid_actions[action_index]
+    }
+    
+    visited_nodes <- c(visited_nodes, action)
+    
+    reward <- cost_matrix[state, action] # agent tries to maximize its reward by minimizing the cost.
+    future_reward <- gamma * max(Q_table[action, ])
+    Q_table[state, action] <- (1-alpha)*Q_table[state, action] + alpha*(reward + future_reward)
+    
+    state <- action  
+  }
+}
+
+print(Q_table)
+
+
+################################################################################
+#                                   BEST PATH
+################################################################################
+# After learning, we can use the Q-table to take decisions:
+start_node <- 1
+end_node <- 3
+current_node <- start_node
+path <- c(start_node)
+visited <- c()
+
+while (current_node != end_node) {
+  # Sort Q-values for the current node in descending order
+  sorted_nodes <- order(Q_table[current_node, ], decreasing = TRUE)
+  
+  # Find the best unvisited node that is also connected to the current node
+  next_node <- NULL
+  for (node in sorted_nodes) {
+    if (!node %in% visited && adj_matrix[current_node, node] == 1) {
+      next_node <- node
+      break
+    }
+  }
+  
+  # If we can't find any valid unvisited nodes, break
+  if (is.null(next_node)) {
+    cat("No valid unvisited nodes connected to the current node. Exiting...\n")
+    break
+  }
+  
+  visited <- c(visited, current_node)  # Add current node to visited list
+  path <- c(path, next_node)
+  current_node <- next_node
+}
+
+# Given your printed Q-table and the derived path, the agent believes that
+# this path has the highest cumulative reward. This doesn't mean that it's the
+# shortest path or has the lowest cost, but rather, based on the training
+# episodes and the Q-learning parameters, it's the path that the agent has
+# learned to be most rewarding.
+print(path)
 
