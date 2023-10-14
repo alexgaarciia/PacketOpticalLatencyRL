@@ -15,10 +15,10 @@ library(igraph)
 library(MDPtoolbox) 
 rm(list=ls())
 
-# Select 5 routers and create the connexions.
+# Select 5 routers and create the connections:
 num_states = 5
 
-# 1. Creation of states:
+# Create the states:
 states <- paste0("s", 1:num_states)
 
 
@@ -102,15 +102,23 @@ for (i in 1:num_nodes) {
       min_cost <- Inf
       chosen_path_k <- NA  # Track the path 'k' that gave the minimum cost
       for (k in 1:num_paths) {
+        # Get the values for this dimension
         km_value <- distance_values[i, j, k]
         load_value <- load_values[i, j, k]
         ber_value <- ber_values[i, j, k]
+        
+        # Check if any of the values is NA
         if (!anyNA(c(km_value, load_value, ber_value))) {
+          # Calculate the minimum cost
           cost <- calculate_total_cost(km_value, load_value, ber_value)
-          min_cost <- min(min_cost, cost)
-          chosen_path_k <- k  # update the chosen path
+          
+          if (cost < min_cost) {
+            min_cost <- cost
+            chosen_path_k <- k  # update the chosen path
+          }
         }
       }
+      
       cost_matrix[i, j] <- -min_cost
       # If we found a chosen path 'k', store the respective km, ber, and load values
       if (!is.na(chosen_path_k)) {
@@ -126,6 +134,7 @@ print(cost_matrix)
 print(chosen_distance)
 print(chosen_load)
 print(chosen_ber)
+
 
 ################################################################################
 #                             REPRESENT THE TOPLOGY
