@@ -176,7 +176,7 @@ plot_topology <- function(adj_matrix, chosen_distance, chosen_load, chosen_ber){
         label <- paste(
           "Distance:", round(chosen_distance[i,j], 4), 
           "\nLoad:", round(chosen_load[i,j], 4), 
-          "\nBeR:", chosen_ber[i,j],
+          "\nBeR:", round(chosen_ber[i,j], 4),
           "\n"
         )
         edge_labels = c(edge_labels, label)
