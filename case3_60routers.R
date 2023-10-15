@@ -4,6 +4,7 @@
 # Call the file that contains all the functions that solve topologies:
 source("topology_solver.R")
 
+# Define some general variables:
 num_states <- 60
 num_paths = 2
 alpha = 0.5
@@ -95,11 +96,19 @@ adj_matrix[59,60] = 1; adj_matrix[60,59] = 1
 adj_matrix[46,60] = 1; adj_matrix[60,46] = 1
 
 
-# Start
+# STEP 1: Create the routers.
 create_states(num_states)
+
+# STEP 2: Generate the paths.
 generate_random_values(num_states, num_paths, adj_matrix)
+
+# STEP 3: Select the best paths based on lowest costs.
 select_best_paths(num_states, num_paths, adj_matrix, distance_values, load_values, ber_values)
+
+# STEP 4: Plot the topology.
 plot_topology(adj_matrix, chosen_distance, chosen_load, chosen_ber)
+
+# STEP 5: Use Q-learning to explore the environment,
 solve_scenario_qlearning(num_states, adj_matrix, alpha, gamma, epsilon, num_episodes, cost_matrix)
 
 # Obtain the path to from every node to every other node:
@@ -111,11 +120,4 @@ for (i in 1:num_states){
     }
   }
 }
-
-
-################################################################################
-#                            SCENARIO 2: GIVEN VALUES
-################################################################################
-# Call the file that contains all the functions that solve topologies:
-source("topology_solver.R")
 

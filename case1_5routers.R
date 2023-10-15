@@ -21,10 +21,20 @@ adj_matrix <- matrix(c(
   0, 0, 1, 1, 0  
 ), nrow=num_states, byrow=TRUE)
 
+
+# STEP 1: Create the routers.
 create_states(num_states)
+
+# STEP 2: Generate the paths.
 generate_random_values(num_states, num_paths, adj_matrix)
+
+# STEP 3: Select the best paths based on lowest costs.
 select_best_paths(num_states, num_paths, adj_matrix, distance_values, load_values, ber_values)
+
+# STEP 4: Plot the topology.
 plot_topology(adj_matrix, chosen_distance, chosen_load, chosen_ber)
+
+# STEP 5: Use Q-learning to explore the environment,
 solve_scenario_qlearning(num_states, adj_matrix, alpha, gamma, epsilon, num_episodes, cost_matrix)
 
 # Obtain the path to from every node to every other node:
@@ -60,9 +70,11 @@ adj_matrix <- matrix(c(
   0, 1, 0, 0, 1, 
   0, 0, 1, 1, 0  
 ), nrow=num_states, byrow=TRUE)
+
+# STEP 1: Create the routers.
 create_states(num_states)
 
-# Define the arrays that store distances, loads and BeR values.
+# STEP 2: Define the values of distance, load and BeR.
 distance_values <- array(NA, dim = c(num_states, num_states, num_paths))
 load_values <- array(NA, dim = c(num_states, num_states, num_paths))
 ber_values <- array(NA, dim = c(num_states, num_states, num_paths))
@@ -91,15 +103,21 @@ ber_values[2,4,1] = 10^-6; ber_values[4,2,1] = 10^-6
 ber_values[3,5,1] = 0; ber_values[5,3,1] = 0
 ber_values[4,5,1] = 10^-6; ber_values[5,4,1] = 10^-6
 
-# Solve the scenario:
+# STEP 3: Select the best paths based on lowest costs.
 select_best_paths(num_states, num_paths, adj_matrix, distance_values, load_values, ber_values)
+
+# STEP 4: Plot the topology.
 plot_topology(adj_matrix, chosen_distance, chosen_load, chosen_ber)
+
+# STEP 5: Use Q-learning to explore the environment,
 solve_scenario_qlearning(num_states, adj_matrix, alpha, gamma, epsilon, num_episodes, cost_matrix)
 
+# Obtain the path to from every node to every other node:
 for (i in 1:num_states){
   for (j in 1:num_states){
     if (i != j){
       get_best_path_after_learning(Q_table, start_node = i, end_node = j, adj_matrix)
+      cat("\n")
     }
   }
 }
