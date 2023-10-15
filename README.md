@@ -5,13 +5,6 @@ variables along the lines of the distance, load and BeR (Bit Error Rate).
 
 ## Files available in the repository
 ### Algorithms:
-- rlearning: This file contains a 4-router topology. It has the main goal of 
-testing several proposed scenarios. Firstly, we defined the main scenario by
-using an environment, and then performing reinforcement learning on a number
-of simulations. With this, we will obtain the immediate rewards, which will be 
-useful to guide the learning process. After that, we solve some MDP (Markov Decision
-Processes) with specific rewards.
-
 - generic_algorithm: This file is used to generate and solve random topologies of
 a number of routers between 6 and 20. Parameters that must be specified: number of paths,
 alpha, gamma, epsilon and number of episodes.
