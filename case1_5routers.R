@@ -1,8 +1,10 @@
-source("topology_solver.R")
-
 ################################################################################
 #                            SCENARIO 1: RANDOM VALUES
 ################################################################################
+# Call the file that contains all the functions that solve topologies:
+source("topology_solver.R")
+
+# Define some general variables:
 num_states <- 5
 num_paths = 2
 alpha = 0.5
@@ -39,6 +41,9 @@ for (i in 1:num_states){
 ################################################################################
 #                            SCENARIO 2: GIVEN VALUES
 ################################################################################
+# Call the file that contains all the functions that solve topologies:
+source("topology_solver.R")
+
 # Define some general variables:
 num_states <- 5
 num_paths = 2
@@ -56,6 +61,11 @@ adj_matrix <- matrix(c(
   0, 0, 1, 1, 0  
 ), nrow=num_states, byrow=TRUE)
 create_states(num_states)
+
+# Define the arrays that store distances, loads and BeR values.
+distance_values <- array(NA, dim = c(num_states, num_states, num_paths))
+load_values <- array(NA, dim = c(num_states, num_states, num_paths))
+ber_values <- array(NA, dim = c(num_states, num_states, num_paths))
 
 # Define the distance values between routers:
 distance_values[1,2,1] = 6; distance_values[2,1,1] <- 6
