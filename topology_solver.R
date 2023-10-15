@@ -6,7 +6,7 @@ library(igraph)
 #                           GENERATION OF ROUTERS
 ################################################################################
 create_states <- function(num_states){
-  "This is a function designed to generate a random topology"
+  "This is a function designed to generate the routers"
   
   # Create the states:
   states <- paste0("s", 1:num_states)
