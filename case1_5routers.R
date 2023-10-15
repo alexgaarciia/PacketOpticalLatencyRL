@@ -34,7 +34,7 @@ select_best_paths(num_states, num_paths, adj_matrix, distance_values, load_value
 # STEP 4: Plot the topology.
 plot_topology(adj_matrix, chosen_distance, chosen_load, chosen_ber)
 
-# STEP 5: Use Q-learning to explore the environment,
+# STEP 5: Use Q-learning to explore the environment.
 solve_scenario_qlearning(num_states, adj_matrix, alpha, gamma, epsilon, num_episodes, cost_matrix)
 
 # Obtain the path to from every node to every other node:
