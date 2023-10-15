@@ -3,6 +3,12 @@ The main goal of this project is to define a framework based on RL to decide
 which is the best possible route based on rewards. It will take into account
 variables along the lines of the distance, load and BeR (Bit Error Rate). 
 
+The entire code is based on the combination of Dijkstra's algorithm and Q-learning.
+This approach leverages the strengths of both techniques. Dijkstra's algorithm
+ensures that the routing algorithm selects the best path according to the cumulative
+reward, while Q-learning allows the algorithm to adapt and learn these rewards based
+on dynamic network conditions and objectives.
+
 ## Files available in the repository
 ### Algorithms:
 - generic_algorithm: This file is used to generate and solve random topologies of
