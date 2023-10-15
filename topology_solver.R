@@ -182,7 +182,7 @@ select_best_paths <- function(num_states, num_paths, adj_matrix, distance_values
 
 
 ################################################################################
-#                             REPRESENT THE TOPLOGY
+#                             REPRESENT THE TOPOLOGY
 ################################################################################
 plot_topology <- function(adj_matrix, chosen_distance, chosen_load, chosen_ber){
   "This is a function used to plot the topology of the current environment"
