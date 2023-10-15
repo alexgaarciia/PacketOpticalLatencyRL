@@ -1,4 +1,4 @@
-source("5routers_topology.R")
+source("topology_solver.R")
 
 ################################################################################
 #                            SCENARIO 1: RANDOM VALUES
@@ -56,16 +56,6 @@ adj_matrix <- matrix(c(
   0, 0, 1, 1, 0  
 ), nrow=num_states, byrow=TRUE)
 create_states(num_states)
-
-# Define the matrices that will be used for the project:
-distance_values <- array(NA, dim = c(num_states, num_states, num_paths))
-load_values <- array(NA, dim = c(num_states, num_states, num_paths))
-ber_values <- array(NA, dim = c(num_states, num_states, num_paths))
-chosen_distance <- matrix(NA, nrow = num_states, ncol = num_states)
-chosen_ber <- matrix(NA, nrow = num_states, ncol = num_states)
-chosen_load <- matrix(NA, nrow = num_states, ncol = num_states)
-cost_matrix <- matrix(-Inf, nrow = num_states, ncol = num_states)
-Q_table <- matrix(0, nrow = num_states, ncol = num_states)
 
 # Define the distance values between routers:
 distance_values[1,2,1] = 6; distance_values[2,1,1] <- 6
