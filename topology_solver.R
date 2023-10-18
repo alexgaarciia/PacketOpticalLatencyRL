@@ -1,5 +1,5 @@
 rm(list=ls())
-library(igraph)
+install.packages("igraph")
 
 
 ################################################################################
@@ -11,7 +11,7 @@ create_states <- function(num_states){
   # Create the states:
   states <- paste0("s", 1:num_states)
   
-  # Return generated states:
+  # Take generated states to the environment:
   assign("states", states, envir = .GlobalEnv)
 }
 
@@ -41,7 +41,7 @@ generate_random_values <- function(num_states, num_paths, adj_matrix){
           # For each path, it generates random values for distance, load and BeR.
           km <- runif(1, min = 1, max = 20)
           load <- runif(1, min = 0, max = 1)
-          BeR <- runif(1, min = 0, max = 1)
+          BeR <- 10^-(sample(3:8, 1))
           
           # Assign values to the arrays for both connections due to symmetry:
           distance_values[i, j, k] <- km; distance_values[j, i, k] <- km
@@ -52,13 +52,13 @@ generate_random_values <- function(num_states, num_paths, adj_matrix){
     }
   }
   
-  # Return generated values:
+  # Take generated values to the environment:
   assign("distance_values", distance_values, envir = .GlobalEnv)
   assign("load_values", load_values, envir = .GlobalEnv)
   assign("ber_values", ber_values, envir = .GlobalEnv)
   
   
-  # Check generated values:
+  # Show generated values:
   cat("Distance values:\n")
   print(distance_values)
   cat("\n")
@@ -158,14 +158,13 @@ select_best_paths <- function(num_states, num_paths, adj_matrix, distance_values
     }
   }
   
-  # Return generated values:
+  # Take generated values to the environment:
+  assign("cost_matrix", cost_matrix, envir = .GlobalEnv)
   assign("chosen_distance", chosen_distance, envir = .GlobalEnv)
   assign("chosen_ber", chosen_ber, envir = .GlobalEnv)
   assign("chosen_load", chosen_load, envir = .GlobalEnv)
-  assign("cost_matrix", cost_matrix, envir = .GlobalEnv)
   
-  
-  # Check generated values:
+  # Show generated values:
   cat("Cost matrix:\n")
   print(cost_matrix)
   cat("\n")
@@ -186,6 +185,7 @@ select_best_paths <- function(num_states, num_paths, adj_matrix, distance_values
 ################################################################################
 plot_topology <- function(adj_matrix, chosen_distance, chosen_load, chosen_ber){
   "This is a function used to plot the topology of the current environment"
+  library(igraph)
   
   # Create the graph:
   g <- graph_from_adjacency_matrix(adjmatrix=adj_matrix, mode="undirected", weighted=NULL, diag=FALSE)
@@ -199,7 +199,7 @@ plot_topology <- function(adj_matrix, chosen_distance, chosen_load, chosen_ber){
         label <- paste(
           "Distance:", round(chosen_distance[i,j], 4), 
           "\nLoad:", round(chosen_load[i,j], 4), 
-          "\nBeR:", round(chosen_ber[i,j], 4),
+          "\nBeR:", chosen_ber[i,j],
           "\n"
         )
         edge_labels = c(edge_labels, label)
@@ -233,6 +233,11 @@ solve_scenario_qlearning <- function(num_states, adj_matrix, alpha, gamma, epsil
   Q_table <- matrix(0, nrow = num_states, ncol = num_states)
   Q_table[adj_matrix == 0] <- -Inf
 
+  # Track the squared difference between Q-tables of consecutive episodes:
+  q_table_differences <- numeric(num_episodes)
+  previous_q_table <- matrix(0, nrow = num_states, ncol = num_states)
+  previous_q_table[adj_matrix == 0] <- -Inf  # Initialize with -Inf for invalid actions
+  
   # Start a loop over a specified number of episodes. In each episode, the agent
   # will navigate through the network to learn the optimal path:
   for (episode in 1:num_episodes) {
@@ -291,15 +296,28 @@ solve_scenario_qlearning <- function(num_states, adj_matrix, alpha, gamma, epsil
       # The agent moves to the next state, which corresponds to the action it chose:
       state <- action  
     }
+    
+    # Track the squared difference for finite values:
+    differences <- (abs(Q_table - previous_q_table))^2
+    
+    # By excluding the "Inf" values when calculating the error, we ensure that
+    # we get a more representative measure of how much the Q-table has truly
+    # changed in areas that can learn and change. It's a way to focus on the 
+    # aspects of the Q-table that are relevant to the learning process.
+    q_table_differences[episode] <- sum(differences[is.finite(differences)])
+    previous_q_table <- Q_table
   }
   
-  # Return generated values:
+  # Take generated values to the environment:
   assign("Q_table", Q_table, envir = .GlobalEnv)
   
-  # Check generated values:
+  # Show generated values:
   cat("Q-Table values:\n")
   print(Q_table)
-}
+  plot(q_table_differences, type="l", xlab="Episodes",
+       ylab="Square Difference in Q-Table",
+       main="Convergence of Q-learning")
+  }
 
 
 ################################################################################
@@ -399,10 +417,10 @@ get_best_path_after_learning <- function(Q_table, start_node, end_node, adj_matr
     path <- c(current_node, path)
   }
   
-  # Return generated values:
+  # Take generated values to the environment:
   assign("path", path, envir = .GlobalEnv)
   
-  # Check generated values:
+  # Show generated values:
   cat("Path from ", start_node, " to ", end_node, " (based on highest cumulative reward):\n")
   print(path)
 }

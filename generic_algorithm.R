@@ -14,7 +14,7 @@ create_states <- function(){
   # Create the states:
   states <- paste0("s", 1:num_states)
   
-  # Return generated values:
+  # Take generated values to the environment:
   assign("num_states", num_states, envir = .GlobalEnv)
   assign("states", states, envir = .GlobalEnv)
 }
@@ -25,6 +25,7 @@ create_states <- function(){
 ################################################################################
 generate_random_values <- function(num_states, num_paths){
   "This is a function used to generate random values of distance, load and BeR"
+  
   # Create an empty adjacency matrix:
   adj_matrix <- matrix(0, nrow = num_states, ncol = num_states)
   
@@ -70,13 +71,13 @@ generate_random_values <- function(num_states, num_paths){
     }
   }
   
-  # Return generated values:
+  # Take generated values to the environment:
   assign("distance_values", distance_values, envir = .GlobalEnv)
   assign("load_values", load_values, envir = .GlobalEnv)
   assign("ber_values", ber_values, envir = .GlobalEnv)
   
   
-  # Check generated values:
+  # Show generated values:
   cat("Distance values:\n")
   print(distance_values)
   cat("\n")
@@ -94,6 +95,7 @@ generate_random_values <- function(num_states, num_paths){
 calculate_total_cost <- function(distance_km, load, BeR) {
   "This is a function used to compute the total cost of a certain path based on
   distance, load and BeR values"
+  
   propagation_delay = 5 * distance_km  # 5us for each km in the fiber.
   tranmission_queue_delay = 1/(1-load)  # 1us x (1/(1-load))
   
@@ -175,14 +177,13 @@ select_best_paths <- function(num_states, num_paths, adj_matrix, distance_values
     }
   }
   
-  # Return generated values:
+  # Take generated values to the environment:
+  assign("cost_matrix", cost_matrix, envir = .GlobalEnv)
   assign("chosen_distance", chosen_distance, envir = .GlobalEnv)
   assign("chosen_ber", chosen_ber, envir = .GlobalEnv)
   assign("chosen_load", chosen_load, envir = .GlobalEnv)
-  assign("cost_matrix", cost_matrix, envir = .GlobalEnv)
   
-  
-  # Check generated values:
+  # Show generated values:
   cat("Cost matrix:\n")
   print(cost_matrix)
   cat("\n")
@@ -250,6 +251,11 @@ solve_scenario_qlearning <- function(num_states, adj_matrix, alpha, gamma, epsil
   Q_table <- matrix(0, nrow = num_states, ncol = num_states)
   Q_table[adj_matrix == 0] <- -Inf
   
+  # Track the squared difference between Q-tables of consecutive episodes:
+  q_table_differences <- numeric(num_episodes)
+  previous_q_table <- matrix(0, nrow = num_states, ncol = num_states)
+  previous_q_table[adj_matrix == 0] <- -Inf  # Initialize with -Inf for invalid actions
+  
   # Start a loop over a specified number of episodes. In each episode, the agent
   # will navigate through the network to learn the optimal path:
   for (episode in 1:num_episodes) {
@@ -308,14 +314,27 @@ solve_scenario_qlearning <- function(num_states, adj_matrix, alpha, gamma, epsil
       # The agent moves to the next state, which corresponds to the action it chose:
       state <- action  
     }
+    
+    # Track the squared difference for finite values:
+    differences <- (abs(Q_table - previous_q_table))^2
+    
+    # By excluding the "Inf" values when calculating the error, we ensure that
+    # we get a more representative measure of how much the Q-table has truly
+    # changed in areas that can learn and change. It's a way to focus on the 
+    # aspects of the Q-table that are relevant to the learning process.
+    q_table_differences[episode] <- sum(differences[is.finite(differences)])
+    previous_q_table <- Q_table
   }
   
-  # Return generated values:
+  # Take generated values to the environment:
   assign("Q_table", Q_table, envir = .GlobalEnv)
   
-  # Check generated values:
+  # Show generated values:
   cat("Q-Table values:\n")
   print(Q_table)
+  plot(q_table_differences, type="l", xlab="Episodes",
+       ylab="Square Difference in Q-Table",
+       main="Convergence of Q-learning")
 }
 
 
@@ -416,10 +435,10 @@ get_best_path_after_learning <- function(Q_table, start_node, end_node, adj_matr
     path <- c(current_node, path)
   }
   
-  # Return generated values:
+  # Take generated values to the environment:
   assign("path", path, envir = .GlobalEnv)
   
-  # Check generated values:
+  # Show generated values:
   cat("Path from ", start_node, " to ", end_node, " (based on highest cumulative reward):\n")
   print(path)
 }
