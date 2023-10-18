@@ -72,6 +72,7 @@ generate_random_values <- function(num_states, num_paths){
   }
   
   # Take generated values to the environment:
+  assign("adj_matrix", adj_matrix, envir = .GlobalEnv)
   assign("distance_values", distance_values, envir = .GlobalEnv)
   assign("load_values", load_values, envir = .GlobalEnv)
   assign("ber_values", ber_values, envir = .GlobalEnv)
@@ -256,6 +257,9 @@ solve_scenario_qlearning <- function(num_states, adj_matrix, alpha, gamma, epsil
   previous_q_table <- matrix(0, nrow = num_states, ncol = num_states)
   previous_q_table[adj_matrix == 0] <- -Inf  # Initialize with -Inf for invalid actions
   
+  # Declare a variable to know in which episode the process converged:
+  convergence_episode <- NULL
+  
   # Start a loop over a specified number of episodes. In each episode, the agent
   # will navigate through the network to learn the optimal path:
   for (episode in 1:num_episodes) {
@@ -326,8 +330,23 @@ solve_scenario_qlearning <- function(num_states, adj_matrix, alpha, gamma, epsil
     previous_q_table <- Q_table
   }
   
+  # Check the episode in which Q-learning converges:
+  #   1. Define the threshold:
+  convergence_threshold <- 0.01
+  
+  #   2. Find the episode of convergence by iterating backwards:
+  convergence_episode <- num_episodes  # start assuming it converged at the last episode
+  for (i in seq(num_episodes, 1, by=-1)) {
+    if (q_table_differences[i] > convergence_threshold) {
+      break
+    }
+    convergence_episode <- i
+  }
+  
   # Take generated values to the environment:
   assign("Q_table", Q_table, envir = .GlobalEnv)
+  assign("q_table_differences", q_table_differences, envir = .GlobalEnv)
+  assign("convergence_episode", convergence_episode, envir = .GlobalEnv)
   
   # Show generated values:
   cat("Q-Table values:\n")
@@ -335,6 +354,7 @@ solve_scenario_qlearning <- function(num_states, adj_matrix, alpha, gamma, epsil
   plot(q_table_differences, type="l", xlab="Episodes",
        ylab="Square Difference in Q-Table",
        main="Convergence of Q-learning")
+  cat("Convergence detected at episode:", convergence_episode, "\n")
 }
 
 
@@ -458,7 +478,7 @@ num_episodes = 1000
 create_states()
 
 # STEP 2: Generate the paths.
-generate_random_values(num_states, num_paths, adj_matrix)
+generate_random_values(num_states, num_paths)
 
 # STEP 3: Select the best paths based on lowest costs.
 select_best_paths(num_states, num_paths, adj_matrix, distance_values, load_values, ber_values)
