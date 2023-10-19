@@ -257,9 +257,6 @@ solve_scenario_qlearning <- function(num_states, adj_matrix, alpha, gamma, epsil
   previous_q_table <- matrix(0, nrow = num_states, ncol = num_states)
   previous_q_table[adj_matrix == 0] <- -Inf  # Initialize with -Inf for invalid actions
   
-  # Declare a variable to know in which episode the process converged:
-  convergence_episode <- NULL
-  
   # Start a loop over a specified number of episodes. In each episode, the agent
   # will navigate through the network to learn the optimal path:
   for (episode in 1:num_episodes) {
