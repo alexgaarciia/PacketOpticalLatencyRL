@@ -56,17 +56,6 @@ generate_random_values <- function(num_states, num_paths, adj_matrix){
   assign("distance_values", distance_values, envir = .GlobalEnv)
   assign("load_values", load_values, envir = .GlobalEnv)
   assign("ber_values", ber_values, envir = .GlobalEnv)
-  
-  
-  # Show generated values:
-  cat("Distance values:\n")
-  print(distance_values)
-  cat("\n")
-  cat("Load values:\n")
-  print(load_values)
-  cat("\n")
-  cat("BeR values:\n")
-  print(ber_values)
 }
 
 
@@ -163,20 +152,6 @@ select_best_paths <- function(num_states, num_paths, adj_matrix, distance_values
   assign("chosen_distance", chosen_distance, envir = .GlobalEnv)
   assign("chosen_ber", chosen_ber, envir = .GlobalEnv)
   assign("chosen_load", chosen_load, envir = .GlobalEnv)
-  
-  # Show generated values:
-  cat("Cost matrix:\n")
-  print(cost_matrix)
-  cat("\n")
-  cat("Distance of the cheapest paths:\n")
-  print(chosen_distance)
-  cat("\n")
-  cat("Loads of the cheapest paths:\n")
-  print(chosen_load)
-  cat("\n")
-  cat("BeR of the cheapest paths:\n")
-  print(chosen_ber)
-  cat("\n")
 }
 
 
@@ -224,6 +199,46 @@ plot_topology <- function(adj_matrix, chosen_distance, chosen_load, chosen_ber){
 ################################################################################
 #                 SOLVE THE PROPOSED SCENARIO USING Q-LEARNING
 ################################################################################
+get_convergence_epsiode <- function(all_q_tables){
+  "This is a function that has the main goal of returning the episode in which
+  Q-learning converges"
+  
+  # Definition of general variables:
+  threshold <- 0.01
+  convergence_episode <- NA
+  
+  # Start the process from Q-table number 21, since we consider the 20 previous
+  # Q-tables for checking convergence (explained in detail below):
+  for (i in 21:length(all_q_tables)){
+    current <- all_q_tables[[i]]
+    
+    # Obtain the 20 previous Q-tables:
+    prev_20_q <- all_q_tables[(i-20):(i-1)]
+    
+    # Initially declare the sum as 0:
+    total_sum = 0
+    
+    # Go through the 20 previous Q-tables and sum them:
+    for (j in 1:length(prev_20_q)){
+      mat_i <- prev_20_q[[j]]
+      total_sum <- total_sum + sum(mat_i[is.finite(mat_i)])
+    }
+    
+    # Obtain the mean:
+    prev_20_mean <- total_sum/20
+    
+    # We consider it has converged when the square sum of the current episode
+    # and the mean of the 20 previous ones is less than the threshold
+    sum_current_one <- sum(current[is.finite(current)])
+    differ <- (abs(sum(sum_current_one - prev_20_mean)))^2
+    if (differ <= 0.01)
+      break
+  }
+  
+  # Show the convergence episode:
+  cat("Convergence detected at episode:", i, "\n")
+}
+
 solve_scenario_qlearning <- function(num_states, adj_matrix, alpha, gamma, epsilon, num_episodes, cost_matrix){
   "This is a function that has the goal of solving a specific scenario using Q-learning"
   
@@ -237,6 +252,9 @@ solve_scenario_qlearning <- function(num_states, adj_matrix, alpha, gamma, epsil
   q_table_differences <- numeric(num_episodes)
   previous_q_table <- matrix(0, nrow = num_states, ncol = num_states)
   previous_q_table[adj_matrix == 0] <- -Inf  # Initialize with -Inf for invalid actions
+  
+  # List to store all Q-tables for every episode:
+  all_q_tables <- list()  
   
   # Start a loop over a specified number of episodes. In each episode, the agent
   # will navigate through the network to learn the optimal path:
@@ -305,34 +323,19 @@ solve_scenario_qlearning <- function(num_states, adj_matrix, alpha, gamma, epsil
     # changed in areas that can learn and change. It's a way to focus on the 
     # aspects of the Q-table that are relevant to the learning process.
     q_table_differences[episode] <- sum(differences[is.finite(differences)])
+    all_q_tables[[episode]] <- Q_table
     previous_q_table <- Q_table
-  }
-  
-  # Check the episode in which Q-learning converges:
-  #   1. Define the threshold:
-  convergence_threshold <- 0.01
-  
-  #   2. Find the episode of convergence by iterating backwards:
-  convergence_episode <- num_episodes  # start assuming it converged at the last episode
-  for (i in seq(num_episodes, 1, by=-1)) {
-    if (q_table_differences[i] > convergence_threshold) {
-      break
-    }
-    convergence_episode <- i
   }
   
   # Take generated values to the environment:
   assign("Q_table", Q_table, envir = .GlobalEnv)
-  assign("q_table_differences", q_table_differences, envir = .GlobalEnv)
-  assign("convergence_episode", convergence_episode, envir = .GlobalEnv)
+  assign("all_q_tables", all_q_tables, envir = .GlobalEnv)
   
   # Show generated values:
-  cat("Q-Table values:\n")
-  print(Q_table)
   plot(q_table_differences, type="l", xlab="Episodes",
        ylab="Square Difference in Q-Table",
        main="Convergence of Q-learning")
-  cat("Convergence detected at episode:", convergence_episode, "\n")
+  get_convergence_epsiode(all_q_tables)
 }
 
 
