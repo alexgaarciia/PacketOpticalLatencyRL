@@ -10,7 +10,7 @@ num_paths = 2
 alpha = 0.5
 gamma = 0.9
 epsilon = 0.1
-num_episodes = 1000
+num_episodes = 5000
 
 # Define the adjacency matrix. 1 means nodes are connected, 0 means they aren't.
 adj_matrix <- matrix(c(
