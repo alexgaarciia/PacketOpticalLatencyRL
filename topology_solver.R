@@ -341,8 +341,8 @@ solve_scenario_qlearning <- function(num_states, adj_matrix, alpha, gamma, epsil
   
   # Show generated values:
   plot(q_table_differences, type="l", xlab="Episodes",
-       ylab="Square Difference in Q-Table",
-       main="Convergence of Q-learning")
+       ylab="Squared Difference of Q-Values Between Episodes",
+       main="Q-learning for Optimal Path with Convergence Monitoring")
   get_convergence_epsiode(all_q_tables)
 }
 
