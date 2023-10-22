@@ -12,8 +12,9 @@ on dynamic network conditions and objectives.
 ## Files available in the repository
 ### Algorithms:
 - generic_algorithm: This file is used to generate and solve random topologies of
-a number of routers between 6 and 20. Parameters that must be specified: number of paths,
-alpha, gamma, epsilon and number of episodes.
+a number of routers between 6 and 20. It contains a random scenario at the end
+of the file to check its functionality. Parameters that must be specified: 
+number of paths, alpha, gamma, epsilon and number of episodes.
 
 - topology_solver: This constitutes one of the most important files in the repository.
 By indicating parameters like the number of routers, number of paths (possible paths
