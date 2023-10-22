@@ -350,12 +350,13 @@ solve_scenario_qlearning <- function(num_states, adj_matrix, alpha, gamma, epsil
     # changed in areas that can learn and change. It's a way to focus on the 
     # aspects of the Q-table that are relevant to the learning process.
     q_table_differences[episode] <- sum(differences[is.finite(differences)])
-    all_q_tables[[episode]] <- Q_table
     previous_q_table <- Q_table
+    all_q_tables[[episode]] <- Q_table
   }
   
   # Take generated values to the environment:
   assign("Q_table", Q_table, envir = .GlobalEnv)
+  assign("q_table_differences", q_table_differences, envir = .GlobalEnv)
   assign("all_q_tables", all_q_tables, envir = .GlobalEnv)
   
   # Show generated values:
