@@ -60,7 +60,7 @@ generate_random_values <- function(num_states, num_paths){
           # For each path, it generates random values for distance, load and BeR.
           km <- runif(1, min = 1, max = 20)
           load <- runif(1, min = 0, max = 1)
-          BeR <- runif(1, min = 0, max = 1)
+          BeR <- 10^-(sample(3:8, 1))
           
           # Assign values to the arrays for both connections due to symmetry:
           distance_values[i, j, k] <- km; distance_values[j, i, k] <- km
@@ -76,17 +76,6 @@ generate_random_values <- function(num_states, num_paths){
   assign("distance_values", distance_values, envir = .GlobalEnv)
   assign("load_values", load_values, envir = .GlobalEnv)
   assign("ber_values", ber_values, envir = .GlobalEnv)
-  
-  
-  # Show generated values:
-  cat("Distance values:\n")
-  print(distance_values)
-  cat("\n")
-  cat("Load values:\n")
-  print(load_values)
-  cat("\n")
-  cat("BeR values:\n")
-  print(ber_values)
 }
 
 
@@ -97,8 +86,11 @@ calculate_total_cost <- function(distance_km, load, BeR) {
   "This is a function used to compute the total cost of a certain path based on
   distance, load and BeR values"
   
-  propagation_delay = 5 * distance_km  # 5us for each km in the fiber.
-  tranmission_queue_delay = 1/(1-load)  # 1us x (1/(1-load))
+  # Penalization of propagation delay: we penalize 5us for each km in the fiber.
+  propagation_delay = 5 * distance_km
+  
+  # Penalization of transmission queue delay: we penalize 1 us x (1/(1-load)).
+  tranmission_queue_delay = 1/(1-load)
   
   # Penalization of BeR:
   if (BeR >= 10^-4 && BeR <= 1){
@@ -121,16 +113,16 @@ select_best_paths <- function(num_states, num_paths, adj_matrix, distance_values
   # 1. cost_matrix: it will store the cost of the shortest paths.
   cost_matrix <- matrix(-Inf, nrow = num_states, ncol = num_states)
   
-  # 2. chosen_distance: it will store the distance between routers that gave the
-  # lowest cost.
+  # 2. chosen_distance: it will store the distance between routers of the path
+  # that gave the lowest cost.
   chosen_distance <- matrix(NA, nrow = num_states, ncol = num_states)
   
-  # 3. chosen_load: it will store the load between routers that gave the
-  # lowest cost.
+  # 3. chosen_load: it will store the load between routers of the path
+  # that gave the lowest cost.
   chosen_load <- matrix(NA, nrow = num_states, ncol = num_states)
   
-  # 4. chosen_ber: it will store the BeR between routers that gave the
-  # lowest cost.
+  # 4. chosen_ber: it will store the BeR between routers of the path
+  # that gave the lowest cost.
   chosen_ber <- matrix(NA, nrow = num_states, ncol = num_states)
   
   # Traverse through every possible combination of nodes:
@@ -183,20 +175,6 @@ select_best_paths <- function(num_states, num_paths, adj_matrix, distance_values
   assign("chosen_distance", chosen_distance, envir = .GlobalEnv)
   assign("chosen_ber", chosen_ber, envir = .GlobalEnv)
   assign("chosen_load", chosen_load, envir = .GlobalEnv)
-  
-  # Show generated values:
-  cat("Cost matrix:\n")
-  print(cost_matrix)
-  cat("\n")
-  cat("Distance of the cheapest paths:\n")
-  print(chosen_distance)
-  cat("\n")
-  cat("Loads of the cheapest paths:\n")
-  print(chosen_load)
-  cat("\n")
-  cat("BeR of the cheapest paths:\n")
-  print(chosen_ber)
-  cat("\n")
 }
 
 
@@ -205,6 +183,9 @@ select_best_paths <- function(num_states, num_paths, adj_matrix, distance_values
 ################################################################################
 plot_topology <- function(adj_matrix, chosen_distance, chosen_load, chosen_ber){
   "This is a function used to plot the topology of the current environment"
+  
+  # Call the "igraph" library:
+  library(igraph)
   
   # Create the graph:
   g <- graph_from_adjacency_matrix(adjmatrix=adj_matrix, mode="undirected", weighted=NULL, diag=FALSE)
@@ -218,7 +199,7 @@ plot_topology <- function(adj_matrix, chosen_distance, chosen_load, chosen_ber){
         label <- paste(
           "Distance:", round(chosen_distance[i,j], 4), 
           "\nLoad:", round(chosen_load[i,j], 4), 
-          "\nBeR:", round(chosen_ber[i,j], 4),
+          "\nBeR:", chosen_ber[i,j],
           "\n"
         )
         edge_labels = c(edge_labels, label)
@@ -272,7 +253,7 @@ get_convergence_epsiode <- function(all_q_tables){
     prev_20_mean <- total_sum/20
     
     # We consider it has converged when the square sum of the current episode
-    # and the mean of the 20 previous ones is less than the threshold
+    # and the mean of the 20 previous ones is less than the threshold.
     sum_current_one <- sum(current[is.finite(current)])
     differ <- (abs(sum(sum_current_one - prev_20_mean)))^2
     if (differ <= 0.01)
@@ -292,7 +273,9 @@ solve_scenario_qlearning <- function(num_states, adj_matrix, alpha, gamma, epsil
   Q_table <- matrix(0, nrow = num_states, ncol = num_states)
   Q_table[adj_matrix == 0] <- -Inf
   
-  # Track the squared difference between Q-tables of consecutive episodes:
+  # Create two variables "q_table_differences" and "previous_q_table". The former
+  # will track the squared difference between Q-tables of consecutive episodes;
+  # the latter, on the other side, will help us maintain the previous Q-table.
   q_table_differences <- numeric(num_episodes)
   previous_q_table <- matrix(0, nrow = num_states, ncol = num_states)
   previous_q_table[adj_matrix == 0] <- -Inf  # Initialize with -Inf for invalid actions
@@ -373,13 +356,9 @@ solve_scenario_qlearning <- function(num_states, adj_matrix, alpha, gamma, epsil
   
   # Take generated values to the environment:
   assign("Q_table", Q_table, envir = .GlobalEnv)
-  assign("q_table_differences", q_table_differences, envir = .GlobalEnv)
   assign("all_q_tables", all_q_tables, envir = .GlobalEnv)
   
-  
   # Show generated values:
-  cat("Q-Table values:\n")
-  print(Q_table)
   plot(q_table_differences, type="l", xlab="Episodes",
        ylab="Square Difference in Q-Table",
        main="Convergence of Q-learning")
@@ -494,7 +473,7 @@ get_best_path_after_learning <- function(Q_table, start_node, end_node, adj_matr
 
 
 ################################################################################
-#                 INVOKE THE FUNCTIONS AND SOLVE RANDOM SCENARIO
+#                             SOLVE RANDOM SCENARIO
 ################################################################################
 # Define some general variables:
 num_paths = 2

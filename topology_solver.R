@@ -66,8 +66,11 @@ calculate_total_cost <- function(distance_km, load, BeR) {
   "This is a function used to compute the total cost of a certain path based on
   distance, load and BeR values"
   
-  propagation_delay = 5 * distance_km  # 5us for each km in the fiber
-  tranmission_queue_delay = 1/(1-load)  # 1us x (1/(1-load))
+  # Penalization of propagation delay: we penalize 5us for each km in the fiber.
+  propagation_delay = 5 * distance_km
+  
+  # Penalization of transmission queue delay: we penalize 1 us x (1/(1-load)).
+  tranmission_queue_delay = 1/(1-load)
   
   # Penalization of BeR:
   if (BeR >= 10^-4 && BeR <= 1){
@@ -90,16 +93,16 @@ select_best_paths <- function(num_states, num_paths, adj_matrix, distance_values
   # 1. cost_matrix: it will store the cost of the shortest paths.
   cost_matrix <- matrix(-Inf, nrow = num_states, ncol = num_states)
   
-  # 2. chosen_distance: it will store the distance between routers that gave the
-  # lowest cost.
+  # 2. chosen_distance: it will store the distance between routers of the path
+  # that gave the lowest cost.
   chosen_distance <- matrix(NA, nrow = num_states, ncol = num_states)
   
-  # 3. chosen_load: it will store the load between routers that gave the
-  # lowest cost.
+  # 3. chosen_load: it will store the load between routers of the path
+  # that gave the lowest cost.
   chosen_load <- matrix(NA, nrow = num_states, ncol = num_states)
   
-  # 4. chosen_ber: it will store the BeR between routers that gave the
-  # lowest cost.
+  # 4. chosen_ber: it will store the BeR between routers of the path
+  # that gave the lowest cost.
   chosen_ber <- matrix(NA, nrow = num_states, ncol = num_states)
  
   # Traverse through every possible combination of nodes:
@@ -160,6 +163,8 @@ select_best_paths <- function(num_states, num_paths, adj_matrix, distance_values
 ################################################################################
 plot_topology <- function(adj_matrix, chosen_distance, chosen_load, chosen_ber){
   "This is a function used to plot the topology of the current environment"
+  
+  # Call the "igraph" library:
   library(igraph)
   
   # Create the graph:
@@ -228,7 +233,7 @@ get_convergence_epsiode <- function(all_q_tables){
     prev_20_mean <- total_sum/20
     
     # We consider it has converged when the square sum of the current episode
-    # and the mean of the 20 previous ones is less than the threshold
+    # and the mean of the 20 previous ones is less than the threshold.
     sum_current_one <- sum(current[is.finite(current)])
     differ <- (abs(sum(sum_current_one - prev_20_mean)))^2
     if (differ <= 0.01)
@@ -248,7 +253,9 @@ solve_scenario_qlearning <- function(num_states, adj_matrix, alpha, gamma, epsil
   Q_table <- matrix(0, nrow = num_states, ncol = num_states)
   Q_table[adj_matrix == 0] <- -Inf
   
-  # Track the squared difference between Q-tables of consecutive episodes:
+  # Create two variables "q_table_differences" and "previous_q_table". The former
+  # will track the squared difference between Q-tables of consecutive episodes;
+  # the latter, on the other side, will help us maintain the previous Q-table.
   q_table_differences <- numeric(num_episodes)
   previous_q_table <- matrix(0, nrow = num_states, ncol = num_states)
   previous_q_table[adj_matrix == 0] <- -Inf  # Initialize with -Inf for invalid actions
