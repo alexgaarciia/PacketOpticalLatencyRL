@@ -1,5 +1,5 @@
 ################################################################################
-#                            SCENARIO 1: RANDOM VALUES
+#                             CASE 3: 60 ROUTERS
 ################################################################################
 # Call the file that contains all the functions that solve topologies:
 source("topology_solver.R")
