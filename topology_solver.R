@@ -3,20 +3,6 @@ install.packages("igraph")
 
 
 ################################################################################
-#                           GENERATION OF ROUTERS
-################################################################################
-create_states <- function(num_states){
-  "This is a function designed to generate the routers"
-  
-  # Create the states:
-  states <- paste0("s", 1:num_states)
-  
-  # Take generated states to the environment:
-  assign("states", states, envir = .GlobalEnv)
-}
-
-
-################################################################################
 #        GENERATION OF RANDOM VALUES OF DISTANCE, LOAD AND Bit Error Rate
 ################################################################################
 generate_random_values <- function(num_states, num_paths, adj_matrix){
@@ -351,7 +337,8 @@ solve_scenario_qlearning <- function(num_states, adj_matrix, alpha, gamma, epsil
 #                                   BEST PATH
 ################################################################################
 get_best_path_after_learning <- function(Q_table, start_node, end_node, adj_matrix) {
-  "Gives the best route from a starting node to a destination node based on the highest cumulative reward (lowest negative reward)"
+  "Gives the best route from a starting node to a destination node based on the
+  highest cumulative reward (lowest negative reward)"
   
   # Obtain the number of states using the Q-table:
   num_states <- nrow(Q_table)
