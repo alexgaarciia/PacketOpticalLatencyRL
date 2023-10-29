@@ -96,22 +96,19 @@ adj_matrix[59,60] = 1; adj_matrix[60,59] = 1
 adj_matrix[46,60] = 1; adj_matrix[60,46] = 1
 
 
-# STEP 1: Create the routers.
-create_states(num_states)
-
-# STEP 2: Generate the paths.
+# STEP 1: Generate the paths.
 generate_random_values(num_states, num_paths, adj_matrix)
 
-# STEP 3: Select the best paths based on lowest costs.
+# STEP 2: Select the best paths based on lowest costs.
 select_best_paths(num_states, num_paths, adj_matrix, distance_values, load_values, ber_values)
 
-# STEP 4: Plot the topology.
+# STEP 3: Plot the topology.
 plot_topology(adj_matrix, chosen_distance, chosen_load, chosen_ber)
 
-# STEP 5: Use Q-learning to explore the environment.
+# STEP 4: Use Q-learning to explore the environment.
 solve_scenario_qlearning(num_states, adj_matrix, alpha, gamma, epsilon, num_episodes, cost_matrix)
 
-# Obtain the path to from every node to every other node:
+# STEP 5: Obtain the path from every node to every other node.
 for (i in 1:num_states){
   for (j in 1:num_states){
     if (i != j){
