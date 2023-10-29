@@ -10,13 +10,9 @@ create_states <- function(){
   
   # Generate a random number of states:
   num_states = sample(6:20, 1)
-  
-  # Create the states:
-  states <- paste0("s", 1:num_states)
-  
+
   # Take generated values to the environment:
   assign("num_states", num_states, envir = .GlobalEnv)
-  assign("states", states, envir = .GlobalEnv)
 }
 
 
@@ -483,22 +479,19 @@ gamma = 0.9
 epsilon = 0.1
 num_episodes = 2500
 
-# STEP 1: Create the routers.
-create_states()
+# STEP 1: Generate the paths.
+generate_random_values(num_states, num_paths, adj_matrix)
 
-# STEP 2: Generate the paths.
-generate_random_values(num_states, num_paths)
-
-# STEP 3: Select the best paths based on lowest costs.
+# STEP 2: Select the best paths based on lowest costs.
 select_best_paths(num_states, num_paths, adj_matrix, distance_values, load_values, ber_values)
 
-# STEP 4: Plot the topology.
+# STEP 3: Plot the topology.
 plot_topology(adj_matrix, chosen_distance, chosen_load, chosen_ber)
 
-# STEP 5: Use Q-learning to explore the environment,
+# STEP 4: Use Q-learning to explore the environment.
 solve_scenario_qlearning(num_states, adj_matrix, alpha, gamma, epsilon, num_episodes, cost_matrix)
 
-# Obtain the path to from every node to every other node:
+# STEP 5: Obtain the path from every node to every other node.
 for (i in 1:num_states){
   for (j in 1:num_states){
     if (i != j){
