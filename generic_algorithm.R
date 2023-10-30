@@ -366,105 +366,48 @@ solve_scenario_qlearning <- function(num_states, adj_matrix, alpha, gamma, epsil
 ################################################################################
 #                                   BEST PATH
 ################################################################################
-get_best_path_after_learning <- function(Q_table, start_node, end_node, adj_matrix) {
-  "Gives the best route from a starting node to a destination node based on the highest cumulative reward (lowest negative reward)"
+create_graph_from_adj_matrix <- function(adj_matrix, Q_table) {
+  "This function is designed to transform an adjacency matrix representation of
+  a directed graph and a Q-table into an igraph object with edge weights based
+  on the Q-table values"
   
-  # Obtain the number of states using the Q-table:
-  num_states <- nrow(Q_table)
+  # Convert Q_table to costs
+  costs <- -Q_table
   
-  # Initialize distance, previous node and visited variables:
-  # 1. distance: It represents the shortest known distance (or, in this case,
-  #   the highest cumulative reward) from the start_node to every other node.
-  distance <- rep(Inf, num_states)
+  # Create a graph from the adjacency matrix
+  graph <- graph_from_adjacency_matrix(adj_matrix, mode = "directed")
   
-  # 2. previous: This vector keeps track of the previous node on the best path
-  #   from the start_node to every other node. It's used for backtracking to find
-  #   the best path once Dijkstra's algorithm completes.
-  previous <- rep(0, num_states)
+  # Get edge list from graph
+  edge_list <- as.matrix(get.edgelist(graph))
   
-  # 3. visited: This vector is a boolean flag for each state/node indicating
-  #   if it has been visited (considered) in Dijkstra's algorithm. It ensures we
-  #   don't reconsider nodes we've already processed.
-  visited <- rep(FALSE, num_states)
+  # Map node names to node numbers
+  node_names <- unique(c(edge_list[, 1], edge_list[, 2]))
+  V(graph)$name <- node_names
+  node_numbers <- match(node_names, V(graph)$name)
+  link_sources <- match(edge_list[,1], V(graph)$name)
+  link_destination <- match(edge_list[,2], V(graph)$name)
   
-  # Start node distance is 0:
-  distance[start_node] <- 0
-  
-  # Find the shortest path using Dijkstra's algorithm with negative rewards:
-  for (i in 1:num_states) {
-    # Find the node with the minimum distance among unvisited nodes:
-    min_distance <- Inf
-    min_index <- -1
-    
-    for (v in 1:num_states) {
-      # The inner loop iterates over all nodes to find the node with the minimum 
-      # distance (highest reward in our case) that hasn't been visited. This node
-      # is represented by min_index.
-      if (!visited[v] && distance[v] < min_distance) {
-        min_distance <- distance[v]
-        min_index <- v
-      }
-    }
-    
-    if (min_index == -1) {
-      # If min_index remains as -1, it indicates that there are no more reachable
-      # nodes left to consider. Thus, we can break out of the outer loop.
-      break
-    }
-    
-    # Mark node as visited:
-    visited[min_index] <- TRUE
-    
-    for (v in 1:num_states) {
-      # This second inner loop checks each neighboring node v of the current
-      # min_index node.
-      
-      if (!visited[v] && adj_matrix[min_index, v] == 1) {
-        # This condition ensures that the neighbor v has not been visited and
-        # is directly connected to the current node.
-        
-        alt <- distance[min_index] + (-Q_table[min_index, v])
-        # For each valid neighbor, the algorithm calculates an alternate distance (alt),
-        # which is the sum of the current node's distance and the negative Q-value
-        # (negative to transform reward into cost).
-        
-        if (alt < distance[v]) {
-          # If this alternate distance is less than the currently known distance
-          # to the neighbor, then:
-          #   1. The distance for the neighboring node v is updated with this new value.
-          #   2. The previous vector for the neighbor v is set to the current node (min_index),
-          #     indicating the current node is the best predecessor for the neighbor
-          #     on the shortest path from the start node.
-          distance[v] <- alt
-          previous[v] <- min_index
-        }
-      }
-    }
+  # Set the edge weights to the costs from the Q_matrix
+  for (i in seq_along(link_sources)) {
+    E(graph)$weight[i] <- costs[link_sources[i], link_destination[i]]
   }
   
-  # Reconstruct the path from end_node to start_node. The path is initialized 
-  # with the end_node because we're going to backtrack from our destination
-  # (end_node) to our starting point (start_node). 
-  path <- c(end_node)
-  current_node <- end_node
-  while (current_node != start_node) {
-    # The loop continues as long as the current_node isn't the start_node, which
-    # means we haven't reached the beginning of our path yet.
-    
-    # This line looks up the previous array to find the predecessor of the
-    # current_node. The previous array contains the best predecessor for each
-    # node as determined by the Dijkstra's algorithm:
-    current_node <- previous[current_node]
-    
-    # Add node to path:
-    path <- c(current_node, path)
-  }
+  # Take generated graph to the environment:
+  assign("graph", graph, envir = .GlobalEnv)
+}
+
+get_best_path_after_learning <- function(graph, start_node, end_node) {
+  "Gives the best route from a starting node to a destination node based on the
+  highest cumulative reward (lowest negative reward)"
   
-  # Take generated values to the environment:
-  assign("path", path, envir = .GlobalEnv)
+  # Use Dijkstra's algorithm to find the shortest path
+  shortest_path <- shortest_paths(graph, from = start_node, to = end_node, mode = "out", output = "both")$vpath
   
-  # Show generated values:
+  # Extract the node indices from the shortest path
+  path <- as.numeric(shortest_path[[1]])
   cat("Path from ", start_node, " to ", end_node, " (based on highest cumulative reward):\n")
+  
+  # Return the path
   print(path)
 }
 
@@ -479,23 +422,28 @@ gamma = 0.9
 epsilon = 0.1
 num_episodes = 2500
 
-# STEP 1: Generate the paths.
-generate_random_values(num_states, num_paths, adj_matrix)
+# STEP 1: Create the states.
+create_states()
 
-# STEP 2: Select the best paths based on lowest costs.
+# STEP 2: Generate the paths.
+generate_random_values(num_states, num_paths)
+
+# STEP 3: Select the best paths based on lowest costs.
 select_best_paths(num_states, num_paths, adj_matrix, distance_values, load_values, ber_values)
 
-# STEP 3: Plot the topology.
+# STEP 4: Plot the topology.
 plot_topology(adj_matrix, chosen_distance, chosen_load, chosen_ber)
 
-# STEP 4: Use Q-learning to explore the environment.
+# STEP 5: Use Q-learning to explore the environment.
 solve_scenario_qlearning(num_states, adj_matrix, alpha, gamma, epsilon, num_episodes, cost_matrix)
 
-# STEP 5: Obtain the path from every node to every other node.
+# STEP 6: Obtain the path from every node to every other node.
+create_graph_from_adj_matrix(adj_matrix, Q_table)
+
 for (i in 1:num_states){
   for (j in 1:num_states){
     if (i != j){
-      get_best_path_after_learning(Q_table, start_node = i, end_node = j, adj_matrix)
+      get_best_path_after_learning(graph, start_node = i, end_node = j)
       cat("\n")
     }
   }
