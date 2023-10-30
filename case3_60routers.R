@@ -109,10 +109,12 @@ plot_topology(adj_matrix, chosen_distance, chosen_load, chosen_ber)
 solve_scenario_qlearning(num_states, adj_matrix, alpha, gamma, epsilon, num_episodes, cost_matrix)
 
 # STEP 5: Obtain the path from every node to every other node.
+create_graph_from_adj_matrix(adj_matrix, Q_table)
+
 for (i in 1:num_states){
   for (j in 1:num_states){
     if (i != j){
-      get_best_path_after_learning(Q_table, start_node = i, end_node = j, adj_matrix)
+      get_best_path_after_learning(graph, start_node = i, end_node = j)
       cat("\n")
     }
   }
