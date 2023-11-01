@@ -6,11 +6,11 @@ source("topology_solver.R")
 
 # Define some general variables:
 num_states <- 5
-num_paths = 2
-alpha = 0.5
-gamma = 0.9
-epsilon = 0.1
-num_episodes = 1000
+num_paths <- 2
+alpha <- 0.5
+gamma <- 0.9
+epsilon <- 0.1
+num_episodes <- 1000
 
 # Define the adjacency matrix. 1 means nodes are connected, 0 means they aren't.
 adj_matrix <- matrix(c(
@@ -35,6 +35,32 @@ plot_topology(adj_matrix, chosen_distance, chosen_load, chosen_ber)
 solve_scenario_qlearning(num_states, adj_matrix, alpha, gamma, epsilon, num_episodes, cost_matrix)
 
 # STEP 5: Obtain the path from every node to every other node.
+create_graph_from_adj_matrix(adj_matrix, Q_table)
+
+for (i in 1:num_states){
+  for (j in 1:num_states){
+    if (i != j){
+      get_best_path_after_learning(graph, start_node = i, end_node = j)
+      cat("\n")
+    }
+  }
+}
+
+# STEP 6: New situation -> some links have been degraded.
+# Degrade paths 1-3 and 1-5:
+ber_values[1,3,1] = 1e-04; ber_values[3,1,1] = 1e-04; ber_values[1,3,2] = 1e-04; ber_values[3,1,2] = 1e-04
+ber_values[3,5,1] = 1e-04; ber_values[5,3,1] = 1e-04; ber_values[3,5,2] = 1e-04; ber_values[5,3,2] = 1e-04
+
+# Select the best paths based on lowest costs.
+select_best_paths(num_states, num_paths, adj_matrix, distance_values, load_values, ber_values)
+
+# Plot the topology.
+plot_topology(adj_matrix, chosen_distance, chosen_load, chosen_ber)
+
+# Use Q-learning to explore the environment.
+solve_scenario_qlearning(num_states, adj_matrix, alpha, gamma, epsilon, num_episodes, cost_matrix)
+
+# Obtain the path from every node to every other node.
 create_graph_from_adj_matrix(adj_matrix, Q_table)
 
 for (i in 1:num_states){

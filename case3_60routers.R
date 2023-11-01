@@ -120,3 +120,34 @@ for (i in 1:num_states){
   }
 }
 
+# STEP 6: New situation -> some links have been degraded.
+# Degrade paths 10-19, 16-19, 17-20, 20-21, 21-22, 15-22, 22-23, 23-24:
+ber_values[10,19,1] = 1e-04; ber_values[19,10,1] = 1e-04; ber_values[10,19,2] = 1e-04; ber_values[19,10,2] = 1e-04
+ber_values[16,19,1] = 1e-04; ber_values[19,16,1] = 1e-04; ber_values[16,19,2] = 1e-04; ber_values[19,16,2] = 1e-04
+ber_values[17,20,1] = 1e-04; ber_values[20,17,1] = 1e-04; ber_values[17,20,2] = 1e-04; ber_values[20,17,2] = 1e-04
+ber_values[20,21,1] = 1e-04; ber_values[21,20,1] = 1e-04; ber_values[20,21,2] = 1e-04; ber_values[21,20,2] = 1e-04
+ber_values[15,22,1] = 1e-04; ber_values[22,15,1] = 1e-04; ber_values[15,22,2] = 1e-04; ber_values[22,15,2] = 1e-04
+ber_values[22,23,1] = 1e-04; ber_values[23,22,1] = 1e-04; ber_values[22,23,2] = 1e-04; ber_values[23,22,2] = 1e-04
+ber_values[23,24,1] = 1e-04; ber_values[24,23,1] = 1e-04; ber_values[23,24,2] = 1e-04; ber_values[24,23,2] = 1e-04
+
+# Select the best paths based on lowest costs.
+select_best_paths(num_states, num_paths, adj_matrix, distance_values, load_values, ber_values)
+
+# Plot the topology.
+plot_topology(adj_matrix, chosen_distance, chosen_load, chosen_ber)
+
+# Use Q-learning to explore the environment.
+solve_scenario_qlearning(num_states, adj_matrix, alpha, gamma, epsilon, num_episodes, cost_matrix)
+
+# Obtain the path from every node to every other node.
+create_graph_from_adj_matrix(adj_matrix, Q_table)
+
+for (i in 1:num_states){
+  for (j in 1:num_states){
+    if (i != j){
+      get_best_path_after_learning(graph, start_node = i, end_node = j)
+      cat("\n")
+    }
+  }
+}
+
