@@ -46,6 +46,10 @@ for (i in 1:num_states){
   }
 }
 
+# Visualize the best path from 1-5:
+visualize_best_path(1, 5, graph)
+
+
 # STEP 6: New situation -> some links have been degraded.
 # Degrade paths 1-3 and 1-5:
 ber_values[1,3,1] = 1e-04; ber_values[3,1,1] = 1e-04; ber_values[1,3,2] = 1e-04; ber_values[3,1,2] = 1e-04
@@ -71,4 +75,7 @@ for (i in 1:num_states){
     }
   }
 }
+
+# Visualize the best path from 1-5:
+visualize_best_path(1, 5, graph)
 
