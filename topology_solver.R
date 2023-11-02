@@ -386,7 +386,7 @@ get_best_path_after_learning <- function(graph, start_node, end_node) {
 #               VISUALIZE BEST PATH FROM A SPECIFIC NODE TO ANOTHER
 ################################################################################
 visualize_best_path <- function(start_node, destination_node, graph){
-  "This is a function that will allows us to visualize the path from a starting
+  "This is a function that will allow us to visualize the path from a starting
   node to a destination node"
   
   # Display all vertices of the graph in grey
