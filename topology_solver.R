@@ -381,3 +381,32 @@ get_best_path_after_learning <- function(graph, start_node, end_node) {
   print(path)
 }
 
+
+################################################################################
+#               VISUALIZE BEST PATH FROM A SPECIFIC NODE TO ANOTHER
+################################################################################
+visualize_best_path <- function(start_node, destination_node, graph){
+  "This is a function that will allows us to visualize the path from a starting
+  node to a destination node"
+  
+  # Display all vertices of the graph in grey
+  V(graph)$color <- "grey"
+  
+  # Display all edges of the graph in grey
+  E(graph)$color <- "grey"
+  
+  # By executing this line, only the start and destination vertices are set to
+  # be displayed in yellow, while all other vertices remain grey
+  V(graph)$color[c(start_node, destination_node)] <- "yellow"
+  
+  # Get the path from source to destination
+  path <- shortest_paths(graph, from = start_node, to = destination_node, output  = "both")$epath[[1]]
+  
+  # Color the edges
+  E(graph)$color[path] <- "red"
+  
+  # Plot the graph
+  l <- layout.auto(graph)
+  plot(graph, edge.arrow.size = 0.5, vertex.label = V(graph)$name, edge.curved = 0.5, layout = l)
+}
+
