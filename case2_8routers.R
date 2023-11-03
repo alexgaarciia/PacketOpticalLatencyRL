@@ -50,11 +50,15 @@ for (i in 1:num_states){
   }
 }
 
-# Visualize the best path from 7-3:
+
+
+################################################################################
+#                          DEGRADING LINKS 7-8, 2-5
+################################################################################
+# Visualize the best path from 7-3 before degradation:
+get_best_path_after_learning(graph, start_node = 7, end_node = 3)
 visualize_best_path(7, 3, graph)
 
-
-# STEP 6: New situation -> some links have been degraded.
 # Degrade paths 7-8 and 2-5:
 ber_values[7,8,1] = 1e-04; ber_values[8,7,1] = 1e-04; ber_values[7,8,2] = 1e-04; ber_values[8,7,2] = 1e-04
 ber_values[2,5,1] = 1e-04; ber_values[5,2,1] = 1e-04; ber_values[2,5,2] = 1e-04; ber_values[5,2,2] = 1e-04
@@ -80,6 +84,7 @@ for (i in 1:num_states){
   }
 }
 
-# Visualize the best path from 7-3:
+# Visualize the best path from 7-3 after degradation:
+get_best_path_after_learning(graph, start_node = 7, end_node = 3)
 visualize_best_path(7, 3, graph)
 
