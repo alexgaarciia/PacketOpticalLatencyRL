@@ -51,52 +51,42 @@ nodes_mat <- read.csv("nodesLabeling_Tokyo.csv", header = FALSE, sep = ";")
 names(nodes_mat)[1] <- paste("nodes")
 V(graph)$name = nodes_mat$nodes
 
-# Obtain the paths from every node to every other node
-for (i in 1:num_states){
-  for (j in 1:num_states){
-    if (i != j){
-      get_best_path_after_learning(graph, start_node = i, end_node = j)
-      cat("\n")
-    }
-  }
-}
 
-
-
-################################################################################
-#                        DEGRADING LINKS 1-3, 2-8, 7-22
-################################################################################
-# Visualize the best path from 22-1 before degradation:
+# Step 6: Visualize the best path from 22-1 before degradation
 get_best_path_after_learning(graph, start_node = 22, end_node = 1)
 visualize_best_path(22, 1, graph)
 
-# Degrade paths 1-3, 2-8, 7-22:
+
+
+################################################################################
+#                        DEGRADING LINKS 1-3, 2-8, 22-23
+################################################################################
+# Step 1: Degrade paths 1-3, 2-8, 7-22
 ber_values[1,3,1] = 1e-04; ber_values[3,1,1] = 1e-04
 ber_values[2,8,1] = 1e-04; ber_values[8,2,1] = 1e-04
-ber_values[22,7,1] = 1e-04; ber_values[7,22,1] = 1e-04
+ber_values[22,23,1] = 1e-04; ber_values[23,22,1] = 1e-04
 
-# Select the best paths based on lowest costs.
+# Step 2: Select the best paths
 select_best_paths(num_states, num_paths, adj_matrix, distance_values, load_values, ber_values)
 
-# Plot the topology.
+# STEP 3: Plot the topology
 plot_topology(adj_matrix, chosen_distance, chosen_load, chosen_ber)
 
-# Use Q-learning to explore the environment.
+# STEP 4: Use Q-learning to explore the environment
 solve_scenario_qlearning(num_states, adj_matrix, alpha, gamma, epsilon, num_episodes, cost_matrix)
 
-# Obtain the path from every node to every other node.
+# STEP 5: Obtain the path from every node to every other node.
+# Create the graph using the adjacency matrix and considering the values of the
+# Q-table as weights
 create_graph_from_adj_matrix(adj_matrix, Q_table)
 
-for (i in 1:num_states){
-  for (j in 1:num_states){
-    if (i != j){
-      get_best_path_after_learning(graph, start_node = i, end_node = j)
-      cat("\n")
-    }
-  }
-}
+# Change the name of the nodes
+nodes_mat <- read.csv("nodesLabeling_Tokyo.csv", header = FALSE, sep = ";") 
+names(nodes_mat)[1] <- paste("nodes")
+V(graph)$name = nodes_mat$nodes
 
-# Visualize the best path from 22-1 after degradation:
+
+# Step 6: Visualize the best path from 22-1 after degradation:
 get_best_path_after_learning(graph, start_node = 22, end_node = 1)
 visualize_best_path(22, 1, graph)
 
