@@ -413,6 +413,36 @@ get_best_path_after_learning <- function(graph, start_node, end_node) {
 
 
 ################################################################################
+#               VISUALIZE BEST PATH FROM A SPECIFIC NODE TO ANOTHER
+################################################################################
+visualize_best_path <- function(start_node, destination_node, graph){
+  "This is a function that will allow us to visualize the path from a starting
+  node to a destination node"
+  
+  # Display all vertices of the graph in grey
+  V(graph)$color <- "grey"
+  
+  # Display all edges of the graph in grey
+  E(graph)$color <- "grey"
+  
+  # By executing this line, only the start and destination vertices are set to
+  # be displayed in yellow, while all other vertices remain grey
+  V(graph)$color[c(start_node, destination_node)] <- "yellow"
+  
+  # Get the path from source to destination
+  path <- shortest_paths(graph, from = start_node, to = destination_node, output  = "both")$epath[[1]]
+  
+  # Color the edges
+  E(graph)$color[path] <- "red"
+  
+  # Plot the graph
+  l <- layout.auto(graph)
+  plot(graph, edge.arrow.size = 0.5, vertex.label = V(graph)$name, edge.curved = 0.5, layout = l)
+}
+
+
+
+################################################################################
 #                             SOLVE RANDOM SCENARIO
 ################################################################################
 # Define some general variables:
@@ -438,14 +468,14 @@ plot_topology(adj_matrix, chosen_distance, chosen_load, chosen_ber)
 solve_scenario_qlearning(num_states, adj_matrix, alpha, gamma, epsilon, num_episodes, cost_matrix)
 
 # STEP 6: Obtain the path from every node to every other node.
+# Create the graph using the adjacency matrix and considering the values of the
+# Q-table as weights
 create_graph_from_adj_matrix(adj_matrix, Q_table)
 
-for (i in 1:num_states){
-  for (j in 1:num_states){
-    if (i != j){
-      get_best_path_after_learning(graph, start_node = i, end_node = j)
-      cat("\n")
-    }
-  }
-}
+# Visualize the best path from i-j (please change values of i and j respecting
+# the generated topology)
+i = 2
+j = 5
+get_best_path_after_learning(graph, start_node = i, end_node = j)
+visualize_best_path(i, j, graph)
 
