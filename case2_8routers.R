@@ -38,53 +38,36 @@ plot_topology(adj_matrix, chosen_distance, chosen_load, chosen_ber)
 # STEP 4: Use Q-learning to explore the environment.
 solve_scenario_qlearning(num_states, adj_matrix, alpha, gamma, epsilon, num_episodes, cost_matrix)
 
-# STEP 5: Obtain the path from every node to every other node.
+# STEP 5: Create the graph using the adjacency matrix and considering the values
+# of the Q-table as weights
 create_graph_from_adj_matrix(adj_matrix, Q_table)
 
-for (i in 1:num_states){
-  for (j in 1:num_states){
-    if (i != j){
-      get_best_path_after_learning(graph, start_node = i, end_node = j)
-      cat("\n")
-    }
-  }
-}
-
-
-
-################################################################################
-#                          DEGRADING LINKS 7-8, 2-5
-################################################################################
-# Visualize the best path from 7-3 before degradation:
+# Step 6: Visualize the best path from 7-3 before degradation
 get_best_path_after_learning(graph, start_node = 7, end_node = 3)
 visualize_best_path(7, 3, graph)
 
-# Degrade paths 7-8 and 2-5:
-ber_values[7,8,1] = 1e-04; ber_values[8,7,1] = 1e-04; ber_values[7,8,2] = 1e-04; ber_values[8,7,2] = 1e-04
-ber_values[2,5,1] = 1e-04; ber_values[5,2,1] = 1e-04; ber_values[2,5,2] = 1e-04; ber_values[5,2,2] = 1e-04
 
-# Select the best paths based on lowest costs.
+################################################################################
+#                          DEGRADING LINKS 7-8, 3-4
+################################################################################
+# Step 1: Degrade paths 7-8 and 2-5:
+ber_values[7,8,1] = 1e-04; ber_values[8,7,1] = 1e-04; ber_values[7,8,2] = 1e-04; ber_values[8,7,2] = 1e-04
+ber_values[3,4,1] = 1e-04; ber_values[4,3,1] = 1e-04; ber_values[3,4,2] = 1e-04; ber_values[4,3,2] = 1e-04
+
+# Step 2: elect the best paths based on lowest costs.
 select_best_paths(num_states, num_paths, adj_matrix, distance_values, load_values, ber_values)
 
-# Plot the topology.
+# Step 3: Plot the topology.
 plot_topology(adj_matrix, chosen_distance, chosen_load, chosen_ber)
 
-# Use Q-learning to explore the environment.
+# Step 4: Use Q-learning to explore the environment.
 solve_scenario_qlearning(num_states, adj_matrix, alpha, gamma, epsilon, num_episodes, cost_matrix)
 
-# Obtain the path from every node to every other node.
+# STEP 5: Create the graph using the adjacency matrix and considering the values
+# of the Q-table as weights
 create_graph_from_adj_matrix(adj_matrix, Q_table)
 
-for (i in 1:num_states){
-  for (j in 1:num_states){
-    if (i != j){
-      get_best_path_after_learning(graph, start_node = i, end_node = j)
-      cat("\n")
-    }
-  }
-}
-
-# Visualize the best path from 7-3 after degradation:
+# Step 6: Visualize the best path from 7-3 before degradation
 get_best_path_after_learning(graph, start_node = 7, end_node = 3)
 visualize_best_path(7, 3, graph)
 

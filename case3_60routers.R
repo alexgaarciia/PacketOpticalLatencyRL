@@ -14,22 +14,22 @@ num_episodes = 5000
 
 # Define the adjacency matrix. 1 means nodes are connected, 0 means they aren't.
 adj_matrix <- matrix(0, nrow=num_states, ncol=num_states)
-adj_matrix[1,2] = 1; adj_matrix[2,1] = 1;
-adj_matrix[2,3] = 1; adj_matrix[3,2] = 1;
-adj_matrix[3,4] = 1; adj_matrix[4,3] = 1;
-adj_matrix[4,5] = 1; adj_matrix[5,4] = 1; 
-adj_matrix[5,6] = 1; adj_matrix[6,5] = 1;
-adj_matrix[6,7] = 1; adj_matrix[7,6] = 1;
-adj_matrix[7,8] = 1; adj_matrix[8,7] = 1;
-adj_matrix[8,9] = 1; adj_matrix[9,8] = 1;
-adj_matrix[9,10] = 1; adj_matrix[10,9] = 1;
+adj_matrix[1,2] = 1; adj_matrix[2,1] = 1
+adj_matrix[2,3] = 1; adj_matrix[3,2] = 1
+adj_matrix[3,4] = 1; adj_matrix[4,3] = 1
+adj_matrix[4,5] = 1; adj_matrix[5,4] = 1
+adj_matrix[5,6] = 1; adj_matrix[6,5] = 1
+adj_matrix[6,7] = 1; adj_matrix[7,6] = 1
+adj_matrix[7,8] = 1; adj_matrix[8,7] = 1
+adj_matrix[8,9] = 1; adj_matrix[9,8] = 1
+adj_matrix[9,10] = 1; adj_matrix[10,9] = 1
 adj_matrix[10,11] = 1; adj_matrix[11,10] = 1
 adj_matrix[4,10] = 1; adj_matrix[10,4] = 1
-adj_matrix[11,12] = 1; adj_matrix[12,11] = 1; 
-adj_matrix[12,13] = 1; adj_matrix[13,12] = 1;
-adj_matrix[13,14] = 1; adj_matrix[14,13] = 1;
-adj_matrix[14,15] = 1; adj_matrix[15,14] = 1;
-adj_matrix[15,16] = 1; adj_matrix[16,15] = 1;
+adj_matrix[11,12] = 1; adj_matrix[12,11] = 1
+adj_matrix[12,13] = 1; adj_matrix[13,12] = 1
+adj_matrix[13,14] = 1; adj_matrix[14,13] = 1
+adj_matrix[14,15] = 1; adj_matrix[15,14] = 1
+adj_matrix[15,16] = 1; adj_matrix[16,15] = 1
 adj_matrix[16,4] = 1; adj_matrix[4,16] = 1
 adj_matrix[15,17] = 1; adj_matrix[17,15] = 1
 adj_matrix[17,18] = 1; adj_matrix[18,17] = 1
@@ -108,28 +108,20 @@ plot_topology(adj_matrix, chosen_distance, chosen_load, chosen_ber)
 # STEP 4: Use Q-learning to explore the environment.
 solve_scenario_qlearning(num_states, adj_matrix, alpha, gamma, epsilon, num_episodes, cost_matrix)
 
-# STEP 5: Obtain the path from every node to every other node.
+# STEP 5: Create the graph using the adjacency matrix and considering the values
+# of the Q-table as weights
 create_graph_from_adj_matrix(adj_matrix, Q_table)
 
-for (i in 1:num_states){
-  for (j in 1:num_states){
-    if (i != j){
-      get_best_path_after_learning(graph, start_node = i, end_node = j)
-      cat("\n")
-    }
-  }
-}
+# Step 6: Visualize the best path from 1-60 before degradation
+get_best_path_after_learning(graph, start_node = 1, end_node = 60)
+visualize_best_path(1, 60, graph)
 
 
 
 ################################################################################
 #   DEGRADING LINKS 10-19, 16-19, 17-20, 20-21, 21-22, 15-22, 22-23, 23-24
 ################################################################################
-# Visualize the best path from 1-60 before degradation:
-get_best_path_after_learning(graph, start_node = 1, end_node = 60)
-visualize_best_path(1, 60, graph)
-
-# Degrade paths 10-19, 16-19, 17-20, 20-21, 21-22, 15-22, 22-23, 23-24:
+# Step 1: Degrade paths 10-19, 16-19, 17-20, 20-21, 21-22, 15-22, 22-23, 23-24:
 ber_values[10,19,1] = 1e-04; ber_values[19,10,1] = 1e-04; ber_values[10,19,2] = 1e-04; ber_values[19,10,2] = 1e-04
 ber_values[16,19,1] = 1e-04; ber_values[19,16,1] = 1e-04; ber_values[16,19,2] = 1e-04; ber_values[19,16,2] = 1e-04
 ber_values[17,20,1] = 1e-04; ber_values[20,17,1] = 1e-04; ber_values[17,20,2] = 1e-04; ber_values[20,17,2] = 1e-04
@@ -138,28 +130,20 @@ ber_values[15,22,1] = 1e-04; ber_values[22,15,1] = 1e-04; ber_values[15,22,2] = 
 ber_values[22,23,1] = 1e-04; ber_values[23,22,1] = 1e-04; ber_values[22,23,2] = 1e-04; ber_values[23,22,2] = 1e-04
 ber_values[23,24,1] = 1e-04; ber_values[24,23,1] = 1e-04; ber_values[23,24,2] = 1e-04; ber_values[24,23,2] = 1e-04
 
-# Select the best paths based on lowest costs.
+# STEP 2: Select the best paths based on lowest costs.
 select_best_paths(num_states, num_paths, adj_matrix, distance_values, load_values, ber_values)
 
-# Plot the topology.
+# STEP 3: Plot the topology.
 plot_topology(adj_matrix, chosen_distance, chosen_load, chosen_ber)
 
-# Use Q-learning to explore the environment.
+# STEP 4: Use Q-learning to explore the environment.
 solve_scenario_qlearning(num_states, adj_matrix, alpha, gamma, epsilon, num_episodes, cost_matrix)
 
-# Obtain the path from every node to every other node.
+# STEP 5: Create the graph using the adjacency matrix and considering the values
+# of the Q-table as weights
 create_graph_from_adj_matrix(adj_matrix, Q_table)
 
-for (i in 1:num_states){
-  for (j in 1:num_states){
-    if (i != j){
-      get_best_path_after_learning(graph, start_node = i, end_node = j)
-      cat("\n")
-    }
-  }
-}
-
-# Visualize the best path from 1-60 after degradation:
+# Step 6: Visualize the best path from 1-60 before degradation
 get_best_path_after_learning(graph, start_node = 1, end_node = 60)
 visualize_best_path(1, 60, graph)
 
