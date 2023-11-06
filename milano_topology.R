@@ -41,9 +41,8 @@ plot_topology(adj_matrix, chosen_distance, chosen_load, chosen_ber)
 # STEP 4: Use Q-learning to explore the environment.
 solve_scenario_qlearning(num_states, adj_matrix, alpha, gamma, epsilon, num_episodes, cost_matrix)
 
-# STEP 5: Obtain the path from every node to every other node.
-# Create the graph using the adjacency matrix and considering the values of the
-# Q-table as weights
+# STEP 5: Create the graph using the adjacency matrix and considering the values
+# of the Q-table as weights
 create_graph_from_adj_matrix(adj_matrix, Q_table)
 
 # Change the name of the nodes
