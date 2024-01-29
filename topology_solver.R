@@ -163,9 +163,9 @@ plot_topology <- function(adj_matrix, chosen_distance, chosen_load, chosen_ber){
     for (j in (i+1):num_states){
       if (adj_matrix[i,j] == 1){
         label <- paste(
-          "Distance:", round(chosen_distance[i,j], 4), 
-          "\nLoad:", round(chosen_load[i,j], 4), 
-          "\nBeR:", chosen_ber[i,j],
+          "d:", signif(chosen_distance[i,j], digits = 2), "km", 
+          "\nρ:", signif(chosen_load[i,j], digits = 2), 
+          "\nBeR:",  signif(chosen_ber[i,j], digits = 2),
           "\n"
         )
         edge_labels = c(edge_labels, label)
@@ -173,17 +173,21 @@ plot_topology <- function(adj_matrix, chosen_distance, chosen_load, chosen_ber){
     }
   }
   
+  set.seed(1234)
+  E(g)$color = "gray"
+  
   # Plot the graph:
   plot(g, 
-       layout = layout_with_fr,
+       layout = layout_with_fr(g),  # Use a different layout algorithm
        vertex.color = "lightblue", 
-       vertex.size = 20, 
-       vertex.label.color = "black",
-       vertex.label.cex = 1,
-       vertex.label.dist = 0.5,
-       edge.label.cex = 0.8,
+       vertex.size = 5, 
+       vertex.label.color = "gray25",
+       vertex.label.cex = 0.8,
+       vertex.label.dist = 0.1,
+       edge.width=8,
+       edge.label.cex = 0.9,
        edge.label = edge_labels,
-       main = "Router Topology") 
+       main = paste("Router Topology")) 
 }
 
 
