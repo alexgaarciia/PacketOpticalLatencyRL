@@ -143,7 +143,6 @@ solve_scenario_qlearning(num_states, adj_matrix, alpha, gamma, epsilon, num_epis
 # of the Q-table as weights
 create_graph_from_adj_matrix(adj_matrix, Q_table)
 
-# Step 6: Visualize the best path from 1-60 before degradation
 get_best_path_after_learning(graph, start_node = 1, end_node = 60)
 visualize_best_path(1, 60, graph)
 
