@@ -42,15 +42,22 @@ solve_scenario_qlearning(num_states, adj_matrix, alpha, gamma, epsilon, num_epis
 # of the Q-table as weights
 create_graph_from_adj_matrix(adj_matrix, Q_table)
 
-# Step 6: Visualize the best path from 7-3 before degradation
-get_best_path_after_learning(graph, start_node = 7, end_node = 3)
-visualize_best_path(7, 3, graph)
+# Step 6: Visualize the best paths before degradation
+for (i in 1:num_states){
+  for (j in 1:num_states){
+    if (i != j){
+      get_best_path_after_learning(graph, start_node = i, end_node = j)
+      cat("\n")
+    }
+  }
+}
+
 
 
 ################################################################################
 #                          DEGRADING LINKS 7-8, 3-4
 ################################################################################
-# Step 1: Degrade paths 7-8 and 2-5:
+# Step 1: Degrade paths 7-8 and 3-4:
 ber_values[7,8,1] = 1e-04; ber_values[8,7,1] = 1e-04; ber_values[7,8,2] = 1e-04; ber_values[8,7,2] = 1e-04
 ber_values[3,4,1] = 1e-04; ber_values[4,3,1] = 1e-04; ber_values[3,4,2] = 1e-04; ber_values[4,3,2] = 1e-04
 
@@ -67,7 +74,13 @@ solve_scenario_qlearning(num_states, adj_matrix, alpha, gamma, epsilon, num_epis
 # of the Q-table as weights
 create_graph_from_adj_matrix(adj_matrix, Q_table)
 
-# Step 6: Visualize the best path from 7-3 before degradation
-get_best_path_after_learning(graph, start_node = 7, end_node = 3)
-visualize_best_path(7, 3, graph)
+# Step 6: Visualize the best paths after degradation
+for (i in 1:num_states){
+  for (j in 1:num_states){
+    if (i != j){
+      get_best_path_after_learning(graph, start_node = i, end_node = j)
+      cat("\n")
+    }
+  }
+}
 
