@@ -180,7 +180,7 @@ plot_topology <- function(adj_matrix, chosen_distance, chosen_load, chosen_ber){
   plot(g, 
        layout = layout_with_fr(g),  # Use a different layout algorithm
        vertex.color = "lightblue", 
-       vertex.size = 5, 
+       vertex.size = 20, 
        vertex.label.color = "gray25",
        vertex.label.cex = 0.8,
        vertex.label.dist = 0.1,
