@@ -51,6 +51,7 @@ for (i in 1:num_states){
     }
   }
 }
+visualize_best_path(1, 5, graph) # example of path visualization
 
 
 
@@ -83,4 +84,6 @@ for (i in 1:num_states){
     }
   }
 }
+
+visualize_best_path(1, 5, graph) # example of path visualization
 

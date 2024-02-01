@@ -38,9 +38,16 @@ solve_scenario_qlearning(num_states, adj_matrix, alpha, gamma, epsilon, num_epis
 # of the Q-table as weights
 create_graph_from_adj_matrix(adj_matrix, Q_table)
 
-# Step 6: Visualize the best path from 1-5 before degradation
-get_best_path_after_learning(graph, start_node = 1, end_node = 5)
-visualize_best_path(1, 5, graph)
+# Step 6: Visualize the best paths before degradation
+for (i in 1:num_states){
+  for (j in 1:num_states){
+    if (i != j){
+      get_best_path_after_learning(graph, start_node = i, end_node = j)
+      cat("\n")
+    }
+  }
+}
+visualize_best_path(1, 5, graph) # example of path visualization
 
 
 
@@ -65,6 +72,14 @@ solve_scenario_qlearning(num_states, adj_matrix, alpha, gamma, epsilon, num_epis
 create_graph_from_adj_matrix(adj_matrix, Q_table)
 
 # Step 6: Visualize the best path from 1-5 after degradation
-get_best_path_after_learning(graph, start_node = 1, end_node = 5)
-visualize_best_path(1, 5, graph)
+for (i in 1:num_states){
+  for (j in 1:num_states){
+    if (i != j){
+      get_best_path_after_learning(graph, start_node = i, end_node = j)
+      cat("\n")
+    }
+  }
+}
+
+visualize_best_path(1, 5, graph) # example of path visualization
 
