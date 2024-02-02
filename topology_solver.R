@@ -5,7 +5,7 @@ install.packages("igraph")
 ################################################################################
 #        GENERATION OF RANDOM VALUES OF DISTANCE, LOAD AND Bit Error Rate
 ################################################################################
-generate_random_values <- function(num_states, num_paths, adj_matrix){
+generate_random_values <- function(num_states, num_paths, adj_matrix, BeR_random = 1){
   "This is a function used to generate random values of distance, load and BeR"
   
   # Create the 3D arrays for each of the variables (the dimensions are 
@@ -27,7 +27,7 @@ generate_random_values <- function(num_states, num_paths, adj_matrix){
           # For each path, it generates random values for distance, load and BeR.
           km <- runif(1, min = 1, max = 20)
           load <- runif(1, min = 0, max = 1)
-          BeR <- 10^-(sample(3:8, 1))
+          BeR = ifelse(BeR_random == 0, 1e-6, 10^-(sample(3:8, 1)))
           
           # Assign values to the arrays for both connections due to symmetry:
           distance_values[i, j, k] <- km; distance_values[j, i, k] <- km
@@ -173,21 +173,18 @@ plot_topology <- function(adj_matrix, chosen_distance, chosen_load, chosen_ber){
     }
   }
   
-  set.seed(1234)
+  set.seed(321)
   E(g)$color = "gray"
   
   # Plot the graph:
   plot(g, 
        layout = layout_with_fr(g),  # Use a different layout algorithm
        vertex.color = "lightblue", 
-       vertex.size = 20, 
-       vertex.label.color = "gray25",
-       vertex.label.cex = 0.8,
+       vertex.size = 15, 
+       vertex.label.color = "black",
+       vertex.label.cex = 1,
        vertex.label.dist = 0.1,
-       edge.width=8,
-       edge.label.cex = 0.9,
-       edge.label = edge_labels,
-       main = paste("Router Topology")) 
+       edge.width=4)
 }
 
 
@@ -230,8 +227,9 @@ get_convergence_epsiode <- function(all_q_tables){
       break
   }
   
-  # Show the convergence episode:
+  # Show and save the convergence episode:
   cat("Convergence detected at episode:", i, "\n")
+  assign("Convergence_episode", i, envir = .GlobalEnv)
 }
 
 solve_scenario_qlearning <- function(num_states, adj_matrix, alpha, gamma, epsilon, num_episodes, cost_matrix){
@@ -377,6 +375,19 @@ get_best_path_after_learning <- function(graph, start_node, end_node) {
   # Use Dijkstra's algorithm to find the shortest path
   shortest_path <- shortest_paths(graph, from = start_node, to = end_node, mode = "out", output = "both")$vpath
   
+  # Extract the penalty for a given path
+  penalty = 0
+  for (i in 1:(length(shortest_path[[1]]) - 1)){
+    # Loop through each edge in the shortest path and get the source and target
+    # nodes of the current edge
+    source_node <- as.numeric(shortest_path[[1]][i])
+    target_node <- as.numeric(shortest_path[[1]][i + 1])
+    
+    # Update penalty using the number of nodes on the current edge
+    penalty <- penalty + all_q_tables[[Convergence_episode]][source_node, target_node] 
+  }
+  cat("Penalty from ", start_node, " to ", end_node,"is", penalty, " (based on highest cumulative reward):\n")
+  
   # Extract the node indices from the shortest path
   path <- as.numeric(shortest_path[[1]])
   cat("Path from ", start_node, " to ", end_node, " (based on highest cumulative reward):\n")
@@ -411,6 +422,7 @@ visualize_best_path <- function(start_node, destination_node, graph){
   
   # Plot the graph
   l <- layout.auto(graph)
+  set.seed(123)
   plot(graph, edge.arrow.size = 0.5, vertex.label = V(graph)$name, edge.curved = 0.5, layout = l)
 }
 
