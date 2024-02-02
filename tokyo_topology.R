@@ -2,8 +2,9 @@
 #                                TOKYO TOPOLOGY
 ################################################################################
 # Call the file that contains all the functions that solve topologies:
-source("topology_solver.R")
+source("topology_solver_v2.R")
 
+set.seed(123)
 # Define some general variables:
 num_states <- 23
 num_paths <- 1
@@ -23,7 +24,7 @@ for (i in 1:length(adj_matrix)){
 }
 
 # STEP 1: Generate the paths.
-generate_random_values(num_states, num_paths, adj_matrix)
+generate_random_values(num_states, num_paths, adj_matrix, BeR_random = 0)
 
 # STEP 2: Select the best paths based on lowest costs.
 # Beware, in our case, "crossMatrix_Tokyo" already contains the distances that
@@ -51,27 +52,37 @@ names(nodes_mat)[1] <- paste("nodes")
 V(graph)$name = nodes_mat$nodes
 
 
-# Step 6: Visualize the best paths before degradation
+# Step 6: Visualize the best path from 22-1 before degradation
 get_best_path_after_learning(graph, start_node = 1, end_node = 22)
-get_best_path_after_learning(graph, start_node = 5, end_node = 20)
-get_best_path_after_learning(graph, start_node = 7, end_node = 18)
-get_best_path_after_learning(graph, start_node = 12, end_node = 16)
 visualize_best_path(1, 22, graph)
-visualize_best_path(5, 20, graph)
-visualize_best_path(7, 18, graph)
-visualize_best_path(12, 16, graph)
 
 
+# Step 6: Visualize the best path from 22-1 before degradation
+get_best_path_after_learning(graph, start_node = 4, end_node = 7)
+visualize_best_path(4, 7, graph)
+
+
+# Step 6: Visualize the best path from 22-1 before degradation
+get_best_path_after_learning(graph, start_node = 4, end_node =11)
+visualize_best_path(4, 11, graph)
+
+
+# Step 6: Visualize the best path from 22-1 before degradation
+get_best_path_after_learning(graph, start_node = 1, end_node = 19)
+visualize_best_path(1, 19, graph)
 
 ################################################################################
-#                        DEGRADING LINKS 5-18, 4-16, 7-21
+#                        DEGRADING LINKS 1-3, 2-8, 22-23
 ################################################################################
-# Step 1: Degrade paths 2-8, 4-16, 7-21
-ber_values[5,18,1] = 1e-04; ber_values[18,5,1] = 1e-04
-ber_values[4,16,1] = 1e-04; ber_values[16,4,1] = 1e-04
-ber_values[7,21,1] = 1e-04; ber_values[21,7,1] = 1e-04
-
-
+# Step 1: Degrade paths 1-3, 2-8, 7-22
+#ber_values[1,3,1] = 1e-04; ber_values[3,1,1] = 1e-04
+#ber_values[2,8,1] = 1e-04; ber_values[8,2,1] = 1e-04
+#ber_values[22,23,1] = 1e-04; ber_values[23,22,1] = 1e-04
+# Step 1: Degrade paths 5-18, 4-16, 7-21
+ber_values[1,6,1] = 1e-03; ber_values[6,1,1] = 1e-03
+ber_values[1,4,1] = 1e-03; ber_values[4,1,1] = 1e-03
+ber_values[10,11,1] = 1e-03; ber_values[11,10,1] = 1e-03
+#Degrade paths 1-3, - E(graph)[2]
 # Step 2: Select the best paths
 select_best_paths(num_states, num_paths, adj_matrix, distance_values, load_values, ber_values)
 
@@ -92,13 +103,21 @@ names(nodes_mat)[1] <- paste("nodes")
 V(graph)$name = nodes_mat$nodes
 
 
-# Step 6: Visualize the best paths after degradation:
+# Step 6: Visualize the best path from 22-1 after degradation:
 get_best_path_after_learning(graph, start_node = 1, end_node = 22)
-get_best_path_after_learning(graph, start_node = 5, end_node = 20)
-get_best_path_after_learning(graph, start_node = 7, end_node = 18)
-get_best_path_after_learning(graph, start_node = 12, end_node = 16)
 visualize_best_path(1, 22, graph)
-visualize_best_path(5, 20, graph)
-visualize_best_path(7, 18, graph)
-visualize_best_path(12, 16, graph)
+
+# Step 6: Visualize the best path from 22-1 after degradation
+get_best_path_after_learning(graph, start_node = 4, end_node = 7)
+visualize_best_path(4, 7, graph)
+
+
+# Step 6: Visualize the best path from 22-1 after degradation
+get_best_path_after_learning(graph, start_node = 4, end_node =11)
+visualize_best_path(4, 11, graph)
+
+
+# Step 6: Visualize the best path from 22-1 after degradation
+get_best_path_after_learning(graph, start_node = 1, end_node = 19)
+visualize_best_path(1, 19, graph)
 
