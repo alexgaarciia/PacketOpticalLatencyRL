@@ -2,6 +2,7 @@
 #                                MILANO TOPOLOGY
 ################################################################################
 # Call the file that contains all the functions that solve topologies:
+set.seed(123)
 source("topology_solver.R")
 
 # Define some general variables:
@@ -51,18 +52,32 @@ names(nodes_mat)[1] <- paste("nodes")
 V(graph)$name = nodes_mat$nodes
 
 
-# Step 6: Visualize the best path from 22-5 before degradation
-get_best_path_after_learning(graph, start_node = 22, end_node = 5)
-visualize_best_path(22, 5, graph)
+# Step 6: Visualize the best path from 5-22 before degradation
+get_best_path_after_learning(graph, start_node = 5, end_node = 22)
+visualize_best_path(5, 22, graph)
+
+# Visualize the best path from 7-50 before degradation
+get_best_path_after_learning(graph, start_node = 7, end_node = 50)
+visualize_best_path(7, 50, graph)
+
+# Visualize the best path from 13-32 before degradation
+get_best_path_after_learning(graph, start_node = 13, end_node = 32)
+visualize_best_path(13, 32, graph)
+
+# Visualize the best path from 44-52 before degradation
+get_best_path_after_learning(graph, start_node = 44, end_node = 52)
+visualize_best_path(44, 52, graph)
 
 
 
 ################################################################################
-#                         DEGRADING LINKS 6-5, 6-21
+#                   DEGRADING LINKS 5-6, 7-23, 22-41, 29-30
 ################################################################################
-# Step 1: Degrade paths 6-5, 6-21
+# Step 1: Degrade paths 5-6, 7-23, 22-41, 29-30
 ber_values[5,6,1] = 1e-04; ber_values[6,5,1] = 1e-04
-ber_values[6,21,1] = 1e-04; ber_values[21,6,1] = 1e-04
+ber_values[7,23,1] = 1e-04; ber_values[23,7,1] = 1e-04
+ber_values[22,41,1] = 1e-04; ber_values[41,22,1] = 1e-04
+ber_values[29,30,1] = 1e-04; ber_values[30,29,1] = 1e-04
 
 # Step 2: Select the best paths
 select_best_paths(num_states, num_paths, adj_matrix, distance_values, load_values, ber_values)
@@ -84,7 +99,19 @@ names(nodes_mat)[1] <- paste("nodes")
 V(graph)$name = nodes_mat$nodes
 
 
-# Step 6: Visualize the best path from 22-5 after degradation
-get_best_path_after_learning(graph, start_node = 22, end_node = 5)
-visualize_best_path(22,5, graph)
+# Step 6: Visualize the best path from 5-22 after degradation
+get_best_path_after_learning(graph, start_node = 5, end_node = 22)
+visualize_best_path(5, 22, graph)
+
+# Visualize the best path from 7-50 before degradation
+get_best_path_after_learning(graph, start_node = 7, end_node = 50)
+visualize_best_path(7, 50, graph)
+
+# Visualize the best path from 13-32 before degradation
+get_best_path_after_learning(graph, start_node = 13, end_node = 32)
+visualize_best_path(13, 32, graph)
+
+# Visualize the best path from 44-52 before degradation
+get_best_path_after_learning(graph, start_node = 44, end_node = 52)
+visualize_best_path(44, 52, graph)
 
