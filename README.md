@@ -1,4 +1,13 @@
 # PacketOpticalLatencyRL
+## Reference
+Detailed experiments and more information about the framework are provided in the following paper:
+> **Reinforcement-Learning based routing for packet-optical networks with hybrid telemetry**
+> 
+> A. L. García Navarro, Nataliia Koneva, Alfonso Sánchez-Macián, José Alberto Hernández, Óscar González de Dios, J. M. Rivas-Moscoso
+> 
+> *URL:* [https://arxiv.org/abs/2406.12602](https://arxiv.org/abs/2406.12602)
+
+## About
 The main goal of this project is to define a framework based on RL to decide
 which is the best possible route based on rewards. It will take into account
 variables along the lines of the distance, load and BeR (Bit Error Rate). 
